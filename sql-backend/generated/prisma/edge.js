@@ -130,7 +130,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\jawda\\OneDrive\\المستندات\\GitHub\\woche-1-JawdatAlqawi\\propra-gr1\\sql-backend\\generated\\prisma",
+      "value": "C:\\Users\\jfbt0\\Programmierpraktikum\\GitHub\\propra-gr1\\sql-backend\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -144,11 +144,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\jawda\\OneDrive\\المستندات\\GitHub\\woche-1-JawdatAlqawi\\propra-gr1\\sql-backend\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\jfbt0\\Programmierpraktikum\\GitHub\\propra-gr1\\sql-backend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
