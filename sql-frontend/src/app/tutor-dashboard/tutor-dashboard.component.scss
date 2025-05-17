@@ -1,0 +1,38 @@
+.tutor-toolbar {
+  background: #424242 !important;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  min-height: 56px;
+}
+
+.tutor-dashboard-content {
+  padding: 24px;
+  overflow: hidden;
+}
+
+.tutor-sidenav-container {
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.tutor-dashboard-content {
+  padding: 24px;
+  overflow: hidden;
+}
+
+mat-sidenav {
+  background: #252525;
+  color: #f1efef;
+  border-right: 1px solid #000000;
+  min-width: 220px;
+
+  .sidenav-bottom-btn {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 16px 0 16px 16px;
+    background: inherit;
+    box-sizing: border-box;
+  }
+}

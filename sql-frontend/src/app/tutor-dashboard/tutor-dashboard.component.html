@@ -1,0 +1,28 @@
+<mat-toolbar class="tutor-toolbar" color="primary">
+  <span>Tutor Dashboard</span>
+</mat-toolbar>
+
+<mat-sidenav-container class="tutor-sidenav-container">
+  <mat-sidenav mode="side" opened>
+    <mat-nav-list>
+      <a mat-list-item routerLink="students" routerLinkActive="active-nav-item" style="color: #fff;">
+    <span style="color: #fff;">Studenten Übersicht</span>
+  </a>
+      <a mat-list-item routerLink="aufgaben" routerLinkActive="active-nav-item" style="color: #fff;">
+    <span style="color: #fff;">Meine Aufgaben</span>
+  </a>
+    </mat-nav-list>
+    <div class="sidenav-bottom-btn">
+      <button mat-button color="accent" (click)="goHome()">
+        <mat-icon>home</mat-icon>
+        Zur Startseite
+      </button>
+      </div>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <div class="tutor-dashboard-content">
+      <!-- --- -->
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
