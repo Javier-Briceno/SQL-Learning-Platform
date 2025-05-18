@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 interface LoginCredentials {
@@ -56,8 +56,7 @@ export class AuthService {
       // In einer echten Anwendung würden Sie wahrscheinlich /auth/profile aufrufen
       this.isAuthenticatedSubject.next(true);
     }
-  }
-  login(credentials: LoginCredentials): Observable<AuthResponse> {
+  }  login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
         tap(response => {
@@ -78,11 +77,24 @@ export class AuthService {
         }),
         catchError(error => {
           console.error('Login fehlgeschlagen', error);
+          
+          if (error.status === 401) {
+            return throwError(() => new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.'));
+          } else if (error.status === 404) {
+            return throwError(() => new Error('Benutzer nicht gefunden. Bitte überprüfen Sie Ihre E-Mail oder registrieren Sie sich.'));
+          } else if (error.status === 400) {
+            return throwError(() => new Error('Ungültige Anfrage. Bitte überprüfen Sie Ihre Eingaben.'));
+          } else if (error.status === 500) {
+            return throwError(() => new Error('Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.'));
+          } else if (!navigator.onLine) {
+            return throwError(() => new Error('Keine Internetverbindung. Bitte überprüfen Sie Ihre Netzwerkeinstellungen.'));
+          }
+          
+          // Allgemeiner Fallback
           return throwError(() => new Error('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'));
         })
       );
   }
-
   register(userData: RegisterData): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/register`, userData)
       .pipe(
@@ -92,7 +104,36 @@ export class AuthService {
         }),
         catchError(error => {
           console.error('Registrierung fehlgeschlagen', error);
-          return throwError(() => new Error('Registrierung fehlgeschlagen. Möglicherweise wird die E-Mail bereits verwendet.'));
+          
+          // Spezifischere Fehlermeldungen basierend auf dem Fehlercode oder der Fehlernachricht
+          if (error.status === 409) {
+            return throwError(() => new Error('Ein Benutzer mit dieser E-Mail existiert bereits. Bitte verwenden Sie eine andere E-Mail-Adresse.'));
+          } else if (error.status === 400) {
+            // Wenn die Backend-Antwort Validierungsfehler enthält
+            if (error.error?.message) {
+              if (Array.isArray(error.error.message)) {
+                // Wenn es ein Array von Validierungsfehlern ist
+                const validationErrors = error.error.message.join(', ');
+                return throwError(() => new Error(`Validierungsfehler: ${validationErrors}`));
+              } else {
+                return throwError(() => new Error(`Fehler: ${error.error.message}`));
+              }
+            } else if (error.error?.errors) {
+              // Alternative Validierungsfehlerstruktur
+              const errorMessages = Object.values(error.error.errors).flat().join(', ');
+              return throwError(() => new Error(`Validierungsfehler: ${errorMessages}`));
+            }
+            
+            // Fallback für allgemeine 400-Fehler
+            return throwError(() => new Error('Die eingegebenen Daten sind ungültig. Bitte überprüfen Sie Ihre Eingaben.'));
+          } else if (error.status === 500) {
+            return throwError(() => new Error('Es ist ein Serverfehler aufgetreten. Bitte versuchen Sie es später erneut.'));
+          } else if (!navigator.onLine) {
+            return throwError(() => new Error('Keine Internetverbindung. Bitte überprüfen Sie Ihre Netzwerkeinstellungen.'));
+          }
+          
+          // Allgemeiner Fallback
+          return throwError(() => new Error('Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.'));
         })
       );
   }
@@ -122,14 +163,15 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
-  }
-  // Methode zum Abrufen des Benutzerprofils
+  }  // Methode zum Abrufen des Benutzerprofils
   getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.apiUrl}/profile`)
+    return this.http.get<any>(`${this.apiUrl}/profile`)
       .pipe(
-        tap(user => {
+        map(response => {
+          // Backend gibt { user: {...} } zurück, wir müssen das User-Objekt extrahieren
+          const user = response.user || response;
           this.userSubject.next(user);
-          // Nach dem Abrufen der Profildaten nicht navigieren, der Aufruf erfolgt bereits auf der Profilseite
+          return user;
         }),
         catchError(error => {
           console.error('Fehler beim Abrufen des Profils', error);
