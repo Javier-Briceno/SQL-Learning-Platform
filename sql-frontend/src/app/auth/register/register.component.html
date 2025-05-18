@@ -1,1 +1,23 @@
-<p>register works!</p>
+<!-- register.component.html -->
+<form [formGroup]="RegisterForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="email">Email</label>
+    <input id="email" type="email" formControlName="email">
+    <div *ngIf="RegisterForm.get('email')?.invalid && RegisterForm.get('email')?.touched">
+      <span *ngIf="RegisterForm.get('email')?.errors?.['required']">Email ist erforderlich</span>
+      <span *ngIf="RegisterForm.get('email')?.errors?.['email']">Bitte geben Sie eine gültige Email ein</span>
+    </div>
+  </div>
+  
+  <div>
+    <label for="password">Passwort</label>
+    <input id="password" type="password" formControlName="password">
+    <div *ngIf="RegisterForm.get('password')?.invalid && RegisterForm.get('password')?.touched">
+      <span *ngIf="RegisterForm.get('password')?.errors?.['required']">Passwort ist erforderlich</span>
+      <span *ngIf="RegisterForm.get('password')?.errors?.['minlength']">Das Passwort muss mindestens 6 Zeichen haben</span>
+    </div>
+  </div>
+  
+  <button type="submit" [disabled]="RegisterForm.invalid">Registrieren</button>
+</form>
+

@@ -1,1 +1,22 @@
-<p>login works!</p>
+<!-- login.component.html -->
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="email">Email</label>
+    <input id="email" type="email" formControlName="email">
+    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+      <span *ngIf="loginForm.get('email')?.errors?.['required']">Email ist erforderlich</span>
+      <span *ngIf="loginForm.get('email')?.errors?.['email']">Bitte geben Sie eine gültige Email ein</span>
+    </div>
+  </div>
+  
+  <div>
+    <label for="password">Passwort</label>
+    <input id="password" type="password" formControlName="password">
+    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+      <span *ngIf="loginForm.get('password')?.errors?.['required']">Passwort ist erforderlich</span>
+      <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Das Passwort muss mindestens 6 Zeichen haben</span>
+    </div>
+  </div>
+  
+  <button type="submit" [disabled]="loginForm.invalid">Anmelden</button>
+</form>
