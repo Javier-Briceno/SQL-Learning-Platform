@@ -10,6 +10,14 @@
   </div>
   
   <div>
+    <label for="name">Name</label>
+    <input id="name" type="text" formControlName="name">
+    <div *ngIf="RegisterForm.get('name')?.invalid && RegisterForm.get('name')?.touched">
+      <span *ngIf="RegisterForm.get('name')?.errors?.['required']">Name ist erforderlich</span>
+    </div>
+  </div>
+  
+  <div>
     <label for="password">Passwort</label>
     <input id="password" type="password" formControlName="password">
     <div *ngIf="RegisterForm.get('password')?.invalid && RegisterForm.get('password')?.touched">
@@ -18,6 +26,17 @@
     </div>
   </div>
   
-  <button type="submit" [disabled]="RegisterForm.invalid">Registrieren</button>
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+  
+  <button type="submit" [disabled]="RegisterForm.invalid || loading">
+    <span *ngIf="!loading">Registrieren</span>
+    <span *ngIf="loading">Wird registriert...</span>
+  </button>
+  
+  <div>
+    <a routerLink="/auth/login">Bereits registriert? Zum Login</a>
+  </div>
 </form>
 

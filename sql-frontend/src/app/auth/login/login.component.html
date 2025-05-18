@@ -1,18 +1,20 @@
 <!-- login.component.html -->
 <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <h2>Anmelden</h2>
+  
   <div>
-    <label for="email">Email</label>
-    <input id="email" type="email" formControlName="email">
-    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-      <span *ngIf="loginForm.get('email')?.errors?.['required']">Email ist erforderlich</span>
-      <span *ngIf="loginForm.get('email')?.errors?.['email']">Bitte geben Sie eine gültige Email ein</span>
+    <label for="email">E-Mail</label>
+    <input id="email" type="email" formControlName="email" placeholder="Ihre E-Mail-Adresse">
+    <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="error-message">
+      <span *ngIf="loginForm.get('email')?.errors?.['required']">E-Mail ist erforderlich</span>
+      <span *ngIf="loginForm.get('email')?.errors?.['email']">Bitte geben Sie eine gültige E-Mail ein</span>
     </div>
   </div>
   
   <div>
     <label for="password">Passwort</label>
-    <input id="password" type="password" formControlName="password">
-    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+    <input id="password" type="password" formControlName="password" placeholder="Ihr Passwort">
+    <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error-message">
       <span *ngIf="loginForm.get('password')?.errors?.['required']">Passwort ist erforderlich</span>
       <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Das Passwort muss mindestens 6 Zeichen haben</span>
     </div>
