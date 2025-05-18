@@ -57,7 +57,6 @@ export class AuthService {
       this.isAuthenticatedSubject.next(true);
     }
   }
-
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
@@ -65,9 +64,17 @@ export class AuthService {
           // Token speichern
           this.saveToken(response.access_token);
           
-          // Optional: Nach Login zum Dashboard navigieren
-          // Je nach Benutzerrolle könnten Sie zu verschiedenen Dashboards navigieren
-          this.router.navigate(['/admin']);
+          // Je nach Benutzerrolle zu verschiedenen Dashboards navigieren
+          // Dies wird basierend auf dem User-Objekt entschieden, das noch geladen werden muss
+          this.getProfile().subscribe(user => {
+            if (user.role === 'ADMIN') {
+              this.router.navigate(['/admin']);
+            } else if (user.role === 'TUTOR') {
+              this.router.navigate(['/tutor-dashboard']);
+            } else {
+              this.router.navigate(['/profile']);
+            }
+          });
         }),
         catchError(error => {
           console.error('Login fehlgeschlagen', error);
@@ -116,13 +123,13 @@ export class AuthService {
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
-
   // Methode zum Abrufen des Benutzerprofils
   getProfile(): Observable<UserProfile> {
     return this.http.get<UserProfile>(`${this.apiUrl}/profile`)
       .pipe(
         tap(user => {
           this.userSubject.next(user);
+          // Nach dem Abrufen der Profildaten nicht navigieren, der Aufruf erfolgt bereits auf der Profilseite
         }),
         catchError(error => {
           console.error('Fehler beim Abrufen des Profils', error);

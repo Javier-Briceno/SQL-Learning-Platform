@@ -5,6 +5,8 @@ import { SettingsManagementComponent } from './pages/admin/settings-management.c
 import { TutorDashboardComponent } from './tutor-dashboard/tutor-dashboard.component';
 import { StudentOverviewComponent } from './tutor-dashboard/student-overview/student-overview.component';
 import { MeineAufgabenComponent } from './tutor-dashboard/meine-aufgaben/meine-aufgaben.component';
+import { ProfileComponent } from './user/profile/profile.component';
+import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -12,16 +14,23 @@ export const routes: Routes = [
     loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
   },
   {
+    path: 'profile',
+    component: ProfileComponent,
+    canActivate: [authGuard]
+  },
+  {
     path: 'admin',
     component: AdminDashboardComponent,
-    // canActivate: [AuthGuard], wenn der AuthGuard implementiert ist
+    canActivate: [authGuard],
     // data: { roles: ['ADMIN'] } wenn Rollenüberprüfung implementiert ist
     children: [
       { path: 'users', component: UserManagementComponent },
       { path: 'settings', component: SettingsManagementComponent },
     ]
   },
-  { path: 'tutor-dashboard', component: TutorDashboardComponent, children: [
+  { path: 'tutor-dashboard', component: TutorDashboardComponent, 
+    canActivate: [authGuard],
+    children: [
     { path: 'students', component: StudentOverviewComponent },
     { path: 'aufgaben', component: MeineAufgabenComponent },
   ] },
