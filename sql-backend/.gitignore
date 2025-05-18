@@ -5,3 +5,7 @@ node_modules
 # Prisma generated
 prisma/generated/
 node_modules/.prisma/
+
+# Compiled output
+/dist
+/.nest
