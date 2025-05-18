@@ -13,6 +13,11 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Auth-Endpunkte ausnehmen - kein Token hinzufügen für login und register
+    if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+      return next.handle(request);
+    }
+    
     const token = this.authService.getToken();
     
     if (token) {

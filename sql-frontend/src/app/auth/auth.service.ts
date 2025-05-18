@@ -63,8 +63,7 @@ export class AuthService {
       .pipe(
         tap(response => {
           // Token speichern
-          localStorage.setItem(this.tokenKey, response.access_token);
-          this.isAuthenticatedSubject.next(true);
+          this.saveToken(response.access_token);
           
           // Optional: Nach Login zum Dashboard navigieren
           // Je nach Benutzerrolle könnten Sie zu verschiedenen Dashboards navigieren
@@ -91,9 +90,25 @@ export class AuthService {
       );
   }
 
-  logout(): void {
+  // Explizite Methode zum Speichern des Tokens
+  saveToken(token: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    this.isAuthenticatedSubject.next(true);
+  }
+
+  // Methode zum Entfernen des Tokens (ersetzt die Funktionalität in logout)
+  removeToken(): void {
     localStorage.removeItem(this.tokenKey);
     this.isAuthenticatedSubject.next(false);
+  }
+
+  // Prüft, ob ein Benutzer eingeloggt ist
+  isLoggedIn(): boolean {
+    return this.hasToken();
+  }
+
+  logout(): void {
+    this.removeToken();
     this.userSubject.next(null);
     this.router.navigate(['/auth/login']);
   }
