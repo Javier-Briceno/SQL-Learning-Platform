@@ -1,0 +1,26 @@
+<div class="profile-container">
+  <h1>Mein Profil</h1>
+  
+  <div *ngIf="loading" class="loading">
+    Lade Profildaten...
+  </div>
+  
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+  
+  <div *ngIf="user && !loading" class="user-profile">
+    <div class="profile-field">
+      <strong>Name:</strong> {{ user.name }}
+    </div>
+    <div class="profile-field">
+      <strong>E-Mail:</strong> {{ user.email }}
+    </div>
+    <div class="profile-field">
+      <strong>Rolle:</strong> {{ user.role }}
+    </div>
+    <div class="profile-field">
+      <strong>Erstellt am:</strong> {{ user.createdAt | date:'dd.MM.yyyy' }}
+    </div>
+  </div>
+</div>
