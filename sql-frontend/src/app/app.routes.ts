@@ -8,6 +8,10 @@ import { MeineAufgabenComponent } from './tutor-dashboard/meine-aufgaben/meine-a
 
 export const routes: Routes = [
   {
+    path: 'auth',
+    loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
+  },
+  {
     path: 'admin',
     component: AdminDashboardComponent,
     // canActivate: [AuthGuard], wenn der AuthGuard implementiert ist
@@ -21,4 +25,5 @@ export const routes: Routes = [
     { path: 'students', component: StudentOverviewComponent },
     { path: 'aufgaben', component: MeineAufgabenComponent },
   ] },
+  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
 ];
