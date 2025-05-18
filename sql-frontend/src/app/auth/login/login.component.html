@@ -18,5 +18,16 @@
     </div>
   </div>
   
-  <button type="submit" [disabled]="loginForm.invalid">Anmelden</button>
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+  
+  <button type="submit" [disabled]="loginForm.invalid || loading">
+    <span *ngIf="!loading">Anmelden</span>
+    <span *ngIf="loading">Wird angemeldet...</span>
+  </button>
+  
+  <div>
+    <a routerLink="/auth/register">Noch kein Konto? Registrieren</a>
+  </div>
 </form>
