@@ -1,0 +1,79 @@
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    max-width: 400px; 
+    margin: 20px auto; 
+
+    input[type="file"] {
+        display: none; 
+    }
+
+    .file-upload-label {
+        display: inline-block;
+        padding: 12px 20px;
+        background-color: #424242;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+            background-color: #1e1e1e;
+        }
+
+        span {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+    }
+
+    .submit-button {
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+
+        &:hover:not(:disabled) {
+            background-color: #1e7e34;
+        }
+
+        &:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    }
+
+    .success-message {
+        color: green;
+        background-color: #e6ffed;
+        border: 1px solid #b7ebc9;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+
+    .error-message {
+        color: red;
+        background-color: #ffebee;
+        border: 1px solid #ffcdd2;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+}
