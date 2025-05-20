@@ -51,7 +51,7 @@ export class SqlUploadComponent {
         const formData = new FormData();
         formData.append('file', this.selectedFile, this.selectedFile.name);
 
-        this.http.post('/sql/upload', formData).subscribe({
+        this.http.post('http://localhost:3000/sql/upload', formData).subscribe({
             next: (response) => {
                 console.log('Upload erfolgreich:', response);
                 this.uploading = false;
