@@ -12,5 +12,6 @@ export class SqlController {
   @UseInterceptors(FileInterceptor('file'))
   async importSqlFile(@UploadedFile() file: Multer.File) {
     const sql = file.buffer.toString('utf8');
+    return this.sqlService.executeSqlFile(sql);
   }
 }
