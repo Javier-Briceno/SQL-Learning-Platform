@@ -1,9 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Client } from 'pg';
 
 @Injectable()
 export class SqlService {
     constructor() { }
+
+    // Hilfsmethode, um eine Verbindung zur Admin-Datenbank herzustellen
+    private async getAdminClient(): Promise<Client> {
+        const client = new Client({
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: 'postgres',
+        });
+        try {
+            await client.connect();
+            return client;
+        } catch (error) {
+            console.error('Fehler beim Verbinden mit der Admin-Datenbank:', error);
+            throw new InternalServerErrorException('Verbindung zur Admin-Datenbank fehlgeschlagen.');
+        }
+    }
 
     async executeSqlFile(sqlText: string) {
 
@@ -29,15 +47,7 @@ export class SqlService {
         const newDbName = dbNameMatch[1];
 
         // Verbindung zur bestehenden postgres-Datenbank aufbauen
-        const adminClient = new Client({
-            host: process.env.DB_HOST,
-            port: Number(process.env.DB_PORT),
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: 'postgres',
-        });
-
-        await adminClient.connect();
+        const adminClient = await this.getAdminClient();
 
         // CREATE DATABASE ausführen
         try {
@@ -69,9 +79,11 @@ export class SqlService {
             console.error('Fehler beim Ausführen der Statements:', err);
             throw err;
         } finally {
-            await newDbClient.end(); 
+            await newDbClient.end();
         }
 
         return { message: `Datenbank "${newDbName}" erfolgreich erstellt und befüllt.` };
     }
+
+    
 }
