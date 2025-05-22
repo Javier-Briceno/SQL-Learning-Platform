@@ -85,5 +85,21 @@ export class SqlService {
         return { message: `Datenbank "${newDbName}" erfolgreich erstellt und befüllt.` };
     }
 
-    
+    async listDatabases(): Promise<string[]> {
+
+        const adminClient = await this.getAdminClient();
+
+        try {
+            // Query, um Datenbanken aufzulisten
+            const result = await adminClient.query(
+                "SELECT datname FROM pg_database WHERE datistemplate = false AND datname NOT IN ('postgres');"
+            );
+            return result.rows.map((row: { datname: string }) => row.datname);
+        } catch (error) {
+            console.error('Fehler beim Auflisten der Datenbanken:', error);
+            throw new InternalServerErrorException('Datenbankliste konnte nicht abgerufen werden.');
+        } finally {
+            await adminClient.end();
+        }
+    }
 }
