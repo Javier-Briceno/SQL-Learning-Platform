@@ -8,6 +8,7 @@ import { MeineAufgabenComponent } from './tutor-dashboard/meine-aufgaben/meine-a
 import { ProfileComponent } from './user/profile/profile.component';
 import { authGuard } from './auth/auth.guard';
 import { SqlUploadComponent } from './tutor-dashboard/sql-upload/sql-upload.component';
+import { DatenbankenComponent } from './tutor-dashboard/datenbanken/datenbanken.component';
 
 export const routes: Routes = [
   {
@@ -35,6 +36,7 @@ export const routes: Routes = [
     { path: 'students', component: StudentOverviewComponent },
     { path: 'aufgaben', component: MeineAufgabenComponent },
     { path: 'upload', component: SqlUploadComponent },
+    { path: 'datenbanken', component: DatenbankenComponent },
   ] },
   { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
 ];
