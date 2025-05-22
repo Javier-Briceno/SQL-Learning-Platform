@@ -1,9 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Client } from 'pg';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SqlService {
-    constructor() { }
+    constructor(private readonly prisma: PrismaService) { }
 
     // Hilfsmethode, um eine Verbindung zur Admin-Datenbank herzustellen
     private async getAdminClient(): Promise<Client> {
@@ -22,6 +23,7 @@ export class SqlService {
             throw new InternalServerErrorException('Verbindung zur Admin-Datenbank fehlgeschlagen.');
         }
     }
+
 
     async executeSqlFile(sqlText: string) {
 
@@ -82,24 +84,34 @@ export class SqlService {
             await newDbClient.end();
         }
 
+        // Neu erstellte Datenbank in die Prisma-Datenbank eintragen
+        try {
+            await this.prisma.managedDatabase.create({
+                data: {
+                    dbName: newDbName,
+                },
+            });
+        } catch (prismaError) {
+            console.warn(`Konnte ${newDbName} nicht zur ManagedDatabase Tabelle hinzufügen (existiert evtl. schon dort?): ${prismaError.message}`);
+        }
+
         return { message: `Datenbank "${newDbName}" erfolgreich erstellt und befüllt.` };
     }
 
+
     async listDatabases(): Promise<string[]> {
-
-        const adminClient = await this.getAdminClient();
-
         try {
-            // Query, um Datenbanken aufzulisten
-            const result = await adminClient.query(
-                "SELECT datname FROM pg_database WHERE datistemplate = false AND datname NOT IN ('postgres');"
-            );
-            return result.rows.map((row: { datname: string }) => row.datname);
+            const managedDbs = await this.prisma.managedDatabase.findMany({
+                select: {
+                    dbName: true, 
+                },
+            });
+
+            return managedDbs.map(db => db.dbName);
+
         } catch (error) {
-            console.error('Fehler beim Auflisten der Datenbanken:', error);
-            throw new InternalServerErrorException('Datenbankliste konnte nicht abgerufen werden.');
-        } finally {
-            await adminClient.end();
+            console.error('Fehler beim Auflisten der verwalteten Datenbanken via Prisma:', error);
+            throw new InternalServerErrorException('Liste der verwalteten Datenbanken konnte nicht abgerufen werden.');
         }
     }
 }
