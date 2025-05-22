@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { Client } from 'pg';
 
 @Injectable()
 export class SqlService {
     constructor() { }
 
-    async executeSqlFile(sqlText: string): Promise<any> {
+    async executeSqlFile(sqlText: string) {
 
-        // Hier dann die Logik zum Ausführen der SQL-Anweisung implementieren:
+        // Die SQL-Statements in der Datei trennen
+        const statements = sqlText
+            .split(';')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
 
     }
 }
