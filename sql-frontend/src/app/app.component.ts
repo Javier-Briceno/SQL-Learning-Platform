@@ -3,6 +3,7 @@ import { RouterOutlet, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { AuthService } from './auth/auth.service';
 
 
 @Component({
@@ -13,5 +14,10 @@ import { MatMenuModule } from '@angular/material/menu';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'sql-frontend';
+
+  constructor(private authService: AuthService) {}
+
+  logout() {
+    this.authService.logout();
+  }
 }
