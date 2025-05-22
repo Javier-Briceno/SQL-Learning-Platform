@@ -55,10 +55,23 @@ export class SqlService {
             port: Number(process.env.DB_PORT),
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
-            database: newDbName, 
+            database: newDbName,
         });
 
         await newDbClient.connect()
 
+        // SQL-Statements in der neuen Datenbank ausführen
+        try {
+            for (const stmt of statements) {
+                await newDbClient.query(stmt);
+            }
+        } catch (err) {
+            console.error('Fehler beim Ausführen der Statements:', err);
+            throw err;
+        } finally {
+            await newDbClient.end(); 
+        }
+
+        return { message: `Datenbank "${newDbName}" erfolgreich erstellt und befüllt.` };
     }
 }
