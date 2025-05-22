@@ -28,5 +28,15 @@ export class SqlService {
 
         const newDbName = dbNameMatch[1];
 
+        // Verbindung zur bestehenden postgres-Datenbank aufbauen
+        const adminClient = new Client({
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: 'postgres', 
+        });
+
+        await adminClient.connect();
     }
 }
