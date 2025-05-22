@@ -46,8 +46,19 @@ export class SqlService {
             console.error('Fehler bei CREATE DATABASE:', err);
             throw err;
         } finally {
-            await adminClient.end(); 
+            await adminClient.end();
         }
-        
+
+        // Verbindung zur neu erstellten Datenbank aufbauen
+        const newDbClient = new Client({
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: newDbName, 
+        });
+
+        await newDbClient.connect()
+
     }
 }
