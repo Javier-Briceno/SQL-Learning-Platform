@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { SqlModule } from './sql/sql.module'; 
+import { SqlController } from './sql/sql.controller';
+import { SqlService } from './sql/sql.service'; 
 
 @Module({
   imports: [
@@ -15,7 +17,7 @@ import { SqlModule } from './sql/sql.module';
     PrismaModule,
     SqlModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, SqlController],
+  providers: [AppService, SqlService],
 })
 export class AppModule {}
