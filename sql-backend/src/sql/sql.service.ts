@@ -34,9 +34,20 @@ export class SqlService {
             port: Number(process.env.DB_PORT),
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
-            database: 'postgres', 
+            database: 'postgres',
         });
 
         await adminClient.connect();
+
+        // CREATE DATABASE ausführen
+        try {
+            await adminClient.query(createDbStmt);
+        } catch (err) {
+            console.error('Fehler bei CREATE DATABASE:', err);
+            throw err;
+        } finally {
+            await adminClient.end(); 
+        }
+        
     }
 }
