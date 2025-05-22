@@ -1,1 +1,24 @@
-<p>datenbanken works!</p>
+<div class="db-management-container">
+  <h2>Alle Datenbanken:</h2>
+
+  <!-- Button zum manuellen Aktualisieren der Liste -->
+  <button (click)="loadDatabases()" [disabled]="isLoading" class="refresh-button">
+    <span *ngIf="isLoading">Lade...</span>
+    <span *ngIf="!isLoading">Datenbankliste aktualisieren</span>
+  </button>
+
+  <!-- Liste der Datenbanken -->
+  <ul *ngIf="!isLoading && databases.length > 0 && !errorMsg" class="database-list">
+    <li *ngFor="let db of databases" class="database-item">
+      <span class="db-name">{{ db }}</span>
+      <button (click)="onDeleteDatabase(db)" [disabled]="isLoading" class="delete-db-button">
+        Löschen
+      </button>
+    </li>
+  </ul>
+
+  <!-- Fehlermeldung: -->
+  <p *ngIf="!isLoading && databases.length === 0 && !errorMsg" class="no-databases-message">
+    Keine selbst erstellten Datenbanken gefunden.
+  </p>
+</div>

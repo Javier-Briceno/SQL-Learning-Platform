@@ -41,5 +41,6 @@ export class DatenbankenComponent {
   }
 
   // Zum Löschen einer Datenbank
-  onDeleteDatabase(): void { }
+  
+  onDeleteDatabase(dbName: string): void { }
 }
