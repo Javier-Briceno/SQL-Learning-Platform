@@ -6,6 +6,7 @@ import { TutorDashboardComponent } from './tutor-dashboard/tutor-dashboard.compo
 import { StudentOverviewComponent } from './tutor-dashboard/student-overview/student-overview.component';
 import { MeineAufgabenComponent } from './tutor-dashboard/meine-aufgaben/meine-aufgaben.component';
 import { ProfileComponent } from './user/profile/profile.component';
+import { OverviewComponent } from './pages/overview/overview.component';
 import { authGuard } from './auth/auth.guard';
 import { SqlUploadComponent } from './tutor-dashboard/sql-upload/sql-upload.component';
 import { DatenbankenComponent } from './tutor-dashboard/datenbanken/datenbanken.component';
@@ -18,6 +19,11 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: ProfileComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'overview',
+    component: OverviewComponent,
     canActivate: [authGuard]
   },
   {
