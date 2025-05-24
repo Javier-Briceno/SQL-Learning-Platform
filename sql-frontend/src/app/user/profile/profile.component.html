@@ -22,5 +22,9 @@
     <div class="profile-field">
       <strong>Erstellt am:</strong> {{ user.createdAt | date:'dd.MM.yyyy' }}
     </div>
+    
+    <div class="action-buttons">
+      <button class="btn btn-primary" [routerLink]="['/overview']">Zur Übersicht</button>
+    </div>
   </div>
 </div>

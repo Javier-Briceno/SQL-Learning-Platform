@@ -1,0 +1,15 @@
+<form (ngSubmit)="onSubmit()" #uploadForm="ngForm" class="upload-form">
+    <label for="file-upload" class="file-upload-label">
+        <span *ngIf="!selectedFile">SQL-Datei auswählen...</span>
+        <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+    </label>
+    <input id="file-upload" type="file" (change)="onFileSelected($event)" accept=".sql" required />
+
+    <button type="submit" [disabled]="!selectedFile || uploading" class="submit-button">
+        <span *ngIf="!uploading">Importieren</span>
+        <span *ngIf="uploading">Wird hochgeladen...</span>
+    </button>
+
+    <div *ngIf="uploadSuccess" class="success-message">Upload erfolgreich!</div>
+    <div *ngIf="errorMsg" class="error-message">{{ errorMsg }}</div>
+</form>

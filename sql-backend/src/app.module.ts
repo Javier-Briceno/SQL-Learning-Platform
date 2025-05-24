@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { SqlModule } from './sql/sql.module'; 
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true, // Macht den ConfigService überall verfügbar
     }),
     AuthModule, 
-    PrismaModule
+    PrismaModule,
+    SqlModule
   ],
   controllers: [AppController],
   providers: [AppService],
