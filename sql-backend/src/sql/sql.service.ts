@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Client } from 'pg';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -103,7 +103,7 @@ export class SqlService {
         try {
             const managedDbs = await this.prisma.managedDatabase.findMany({
                 select: {
-                    dbName: true, 
+                    dbName: true,
                 },
             });
 
@@ -112,6 +112,64 @@ export class SqlService {
         } catch (error) {
             console.error('Fehler beim Auflisten der verwalteten Datenbanken via Prisma:', error);
             throw new InternalServerErrorException('Liste der verwalteten Datenbanken konnte nicht abgerufen werden.');
+        }
+    }
+
+     async deleteDatabase(dbName: string): Promise<void> {
+
+        // Sicherheitsüberprüfung: Verhindere das Löschen von wichtigen Systemdatenbanken
+        const systemDbs = ['postgres', 'template0', 'template1', 'rdsadmin'];
+        if (systemDbs.includes(dbName.toLowerCase())) {
+            throw new BadRequestException(`Das Löschen der System-Datenbank '${dbName}' ist nicht erlaubt.`);
+        }
+
+        const adminClient = await this.getAdminClient();
+
+        try {
+            // Bestehende Verbindungen zur zu löschenden Datenbank trennen
+            const terminateResult = await adminClient.query(`
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = $1
+                  AND pid <> pg_backend_pid();
+            `, [dbName]);
+            console.log(`Versuch, ${terminateResult.rowCount} Verbindungen zu '${dbName}' zu trennen.`);
+
+            // Datenbank physisch löschen
+            await adminClient.query(`DROP DATABASE IF EXISTS "${dbName}";`);
+            console.log(`Datenbank "${dbName}" physisch vom Server gelöscht (oder existierte nicht).`);
+
+            // Eintrag aus der ManagedDatabase-Tabelle via Prisma entfernen
+            try {
+                await this.prisma.managedDatabase.delete({
+                    where: {
+                        dbName: dbName,
+                    },
+                });
+                console.log(`Eintrag für "${dbName}" aus der Verwaltungstabelle (ManagedDatabase) entfernt.`);
+            } catch (prismaError) {
+                if (prismaError.code === 'P2025') { 
+                    console.log(`Eintrag für "${dbName}" war nicht in der Verwaltungstabelle (oder bereits entfernt).`);
+                } else {
+                    console.warn(`Konnte den Eintrag für "${dbName}" nicht aus der Verwaltungstabelle entfernen: ${prismaError.message}`);
+                }
+            }
+        } catch (error) {
+            console.error(`Fehler beim Löschen der Datenbank '${dbName}' auf dem Server:`, error);
+            if (error.code === '3D000') { 
+                try {
+                    await this.prisma.managedDatabase.deleteMany({ where: { dbName: dbName } });
+                    console.log(`Eintrag für nicht gefundene DB "${dbName}" aus Verwaltungstabelle entfernt (falls vorhanden).`);
+                } catch (prismaCleanupError) {
+                    console.warn(`Zusätzlicher Fehler beim Aufräumen des Prisma-Eintrags für nicht gefundene DB ${dbName}: ${prismaCleanupError.message}`);
+                }
+                throw new NotFoundException(`Datenbank "${dbName}" wurde auf dem Server nicht gefunden.`); // NotFoundException needs to be imported as well
+            }
+            throw new InternalServerErrorException(`Ein Fehler ist beim Löschen der Datenbank "${dbName}" aufgetreten: ${error.message}`);
+        } finally {
+            if (adminClient) {
+                await adminClient.end();
+            }
         }
     }
 }

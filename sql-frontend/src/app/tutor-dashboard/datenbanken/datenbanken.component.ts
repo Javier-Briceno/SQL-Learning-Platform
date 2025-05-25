@@ -49,7 +49,7 @@ export class DatenbankenComponent {
       this.errorMsg = null;  
 
       // DELETE-Anfrage an das Backend senden
-      this.http.delete<void>(`${this.baseUrl}/databases/delete/${dbName}`) 
+      this.http.delete<void>(`${this.baseUrl}/delete/${dbName}`) 
         .subscribe({
           next: () => {
             console.log(`Datenbank ${dbName} erfolgreich gelöscht.`);
