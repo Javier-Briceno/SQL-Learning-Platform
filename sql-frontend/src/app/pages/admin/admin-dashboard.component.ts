@@ -25,7 +25,7 @@ export class AdminDashboardComponent {
 
 
     goBack(): void {
-        this.router.navigate(['']);
+        this.router.navigate(['/overview']);
     }
 
     // Methode um alle Benutzer zu laden

@@ -19,7 +19,7 @@ export class TutorDashboardComponent {
   constructor(private router: Router) { }
 
   goHome(): void {
-        this.router.navigate(['']);
+        this.router.navigate(['/overview']);
     }
 
 }
