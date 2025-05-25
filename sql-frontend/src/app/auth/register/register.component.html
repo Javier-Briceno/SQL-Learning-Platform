@@ -1,9 +1,27 @@
 <!-- register.component.html -->
 <form [formGroup]="RegisterForm" (ngSubmit)="onSubmit()">
+  <h2>{{ isTutorMode ? 'Als Tutor registrieren' : 'Neues Studentenkonto erstellen' }}</h2>
+  
+  <div class="registration-type-toggle">
+    <button type="button" class="toggle-button" [class.active]="!isTutorMode" (click)="isTutorMode && toggleTutorMode()">
+      Student
+    </button>
+    <button type="button" class="toggle-button" [class.active]="isTutorMode" (click)="!isTutorMode && toggleTutorMode()">
+      Tutor
+    </button>
+  </div>
+  
+  <p class="info-text" *ngIf="!isTutorMode">
+    Hier können Sie sich als Student registrieren.
+  </p>
+  <p class="info-text" *ngIf="isTutorMode">
+    Für die Registrierung als Tutor benötigen Sie einen gültigen Tutor-Schlüssel.
+  </p>
+  
   <div>
     <label for="email">Email</label>
-    <input id="email" type="email" formControlName="email">
-    <div *ngIf="RegisterForm.get('email')?.invalid && RegisterForm.get('email')?.touched">
+    <input id="email" type="email" formControlName="email" placeholder="Ihre E-Mail-Adresse">
+    <div *ngIf="RegisterForm.get('email')?.invalid && RegisterForm.get('email')?.touched" class="error-message">
       <span *ngIf="RegisterForm.get('email')?.errors?.['required']">Email ist erforderlich</span>
       <span *ngIf="RegisterForm.get('email')?.errors?.['email']">Bitte geben Sie eine gültige Email ein</span>
     </div>
@@ -11,18 +29,26 @@
   
   <div>
     <label for="name">Name</label>
-    <input id="name" type="text" formControlName="name">
-    <div *ngIf="RegisterForm.get('name')?.invalid && RegisterForm.get('name')?.touched">
+    <input id="name" type="text" formControlName="name" placeholder="Ihr vollständiger Name">
+    <div *ngIf="RegisterForm.get('name')?.invalid && RegisterForm.get('name')?.touched" class="error-message">
       <span *ngIf="RegisterForm.get('name')?.errors?.['required']">Name ist erforderlich</span>
     </div>
   </div>
   
   <div>
     <label for="password">Passwort</label>
-    <input id="password" type="password" formControlName="password">
-    <div *ngIf="RegisterForm.get('password')?.invalid && RegisterForm.get('password')?.touched">
+    <input id="password" type="password" formControlName="password" placeholder="Mindestens 6 Zeichen">
+    <div *ngIf="RegisterForm.get('password')?.invalid && RegisterForm.get('password')?.touched" class="error-message">
       <span *ngIf="RegisterForm.get('password')?.errors?.['required']">Passwort ist erforderlich</span>
       <span *ngIf="RegisterForm.get('password')?.errors?.['minlength']">Das Passwort muss mindestens 6 Zeichen haben</span>
+    </div>
+  </div>
+  
+  <div *ngIf="isTutorMode">
+    <label for="tutorKey">Tutor-Schlüssel</label>
+    <input id="tutorKey" type="text" formControlName="tutorKey" placeholder="Geben Sie den Tutor-Schlüssel ein">
+    <div *ngIf="RegisterForm.get('tutorKey')?.invalid && RegisterForm.get('tutorKey')?.touched" class="error-message">
+      <span *ngIf="RegisterForm.get('tutorKey')?.errors?.['required']">Tutor-Schlüssel ist erforderlich</span>
     </div>
   </div>
   
@@ -31,7 +57,7 @@
   </div>
   
   <button type="submit" [disabled]="RegisterForm.invalid || loading">
-    <span *ngIf="!loading">Registrieren</span>
+    <span *ngIf="!loading">{{ isTutorMode ? 'Als Tutor registrieren' : 'Als Student registrieren' }}</span>
     <span *ngIf="loading">Wird registriert...</span>
   </button>
   
