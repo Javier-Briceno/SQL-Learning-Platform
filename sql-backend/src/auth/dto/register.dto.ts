@@ -1,5 +1,5 @@
 // Dieses DTO (Data Transfer Object) wird verwendet, um die Registrierungsdaten eines Benutzers zu validieren.
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail() // Überprüft, ob die E-Mail-Adresse gültig ist
@@ -11,4 +11,8 @@ export class RegisterDto {
 
   @IsString() // Überprüft, ob der Name ein String ist
   name: string;
+
+  @IsOptional() // Dieses Feld ist optional
+  @IsString()
+  tutorKey?: string; // Optional für Tutor-Registrierung
 }

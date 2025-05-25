@@ -12,10 +12,13 @@ import { AuthService } from '../auth.service';
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
+  isTutorMode = false;
+  
   RegisterForm = new FormGroup({
-    email: new FormControl('',[Validators.required, Validators.email]),
-    password: new FormControl('',[Validators.required, Validators.minLength(6)]),
-    name: new FormControl('',[Validators.required])
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+    name: new FormControl('', [Validators.required]),
+    tutorKey: new FormControl('')
   });
   
   // Fehlerbehandlung hinzufügen
@@ -23,17 +26,37 @@ export class RegisterComponent {
   loading = false;
 
   constructor(private authService: AuthService, private router: Router) {}
+  
+  toggleTutorMode() {
+    this.isTutorMode = !this.isTutorMode;
+    
+    if (this.isTutorMode) {
+      this.RegisterForm.get('tutorKey')?.setValidators([Validators.required]);
+    } else {
+      this.RegisterForm.get('tutorKey')?.clearValidators();
+      this.RegisterForm.get('tutorKey')?.setValue('');
+    }
+    
+    this.RegisterForm.get('tutorKey')?.updateValueAndValidity();
+  }
 
   onSubmit() {
     if (this.RegisterForm.valid) {
       this.loading = true;
       this.errorMessage = null;
       
-      this.authService.register(this.RegisterForm.value as {email: string, password: string, name: string})
+      // Tutorenschlüssel nur hinzufügen, wenn im Tutor-Modus
+      const formData = {
+        email: this.RegisterForm.get('email')?.value,
+        password: this.RegisterForm.get('password')?.value,
+        name: this.RegisterForm.get('name')?.value,
+        ...(this.isTutorMode && { tutorKey: this.RegisterForm.get('tutorKey')?.value })
+      };
+      
+      this.authService.register(formData as any)
         .subscribe({
           next: () => {
             // Nach erfolgreicher Registrierung wird automatisch zur Login-Seite navigiert
-            // (durch die tap()-Funktion im AuthService.register)
             this.loading = false;
           },
           error: (error) => {

@@ -13,6 +13,7 @@ interface RegisterData {
   email: string;
   password: string;
   name: string;
+  tutorKey?: string; // Optional für Tutor-Registrierung
 }
 
 interface AuthResponse {

@@ -1,21 +1,27 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
-import { ConflictException, BadRequestException } from '@nestjs/common';
+import { ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
+import { ConfigService } from '@nestjs/config';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private jwtService: JwtService,
+    private configService: ConfigService
+  ) {}
 
 
   /////////////     Implementierung der Register-Methode    /////////////
   
 
   async register(registerDto: RegisterDto) {
-    const { email, password, name } = registerDto;
+    const { email, password, name, tutorKey } = registerDto;
 
     // Überprüfen, ob die E-Mail bereits existiert
     const existingUser = await this.prisma.user.findUnique({
@@ -29,7 +35,20 @@ export class AuthService {
     try {
       // Passwort hashen
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      const hashedPassword = await bcrypt.hash(password, saltRounds);      // Standardrolle ist STUDENT
+      let role: Role = Role.STUDENT;
+      
+      // Wenn ein Tutor-Key angegeben wurde, überprüfen, ob er gültig ist
+      if (tutorKey) {
+        const validTutorKey = this.configService.get<string>('TUTOR_REGISTRATION_KEY');
+        
+        if (tutorKey !== validTutorKey) {
+          throw new ForbiddenException('Ungültiger Tutor-Registrierungsschlüssel');
+        }
+        
+        // Wenn der Tutor-Key gültig ist, setze die Rolle auf TUTOR
+        role = Role.TUTOR;
+      }
 
       // Neuen Benutzer erstellen
       const newUser = await this.prisma.user.create({
@@ -37,12 +56,14 @@ export class AuthService {
           email,
           passwordHash: hashedPassword,
           name,
+          role
         },
         // Sensible Daten nicht zurückgeben
         select: {
           id: true,
           email: true,
           name: true,
+          role: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -98,10 +119,9 @@ export class AuthService {
     },
   });
 }
-
   async getAllStudents() {
     return this.prisma.user.findMany({
-      where: { role: 'STUDENT' },
+      where: { role: Role.STUDENT },
       select: {
         id: true,
         name: true,
