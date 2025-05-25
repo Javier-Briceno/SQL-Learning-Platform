@@ -98,4 +98,17 @@ export class AuthService {
     },
   });
 }
+
+  async getAllStudents() {
+    return this.prisma.user.findMany({
+      where: { role: 'STUDENT' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
 }

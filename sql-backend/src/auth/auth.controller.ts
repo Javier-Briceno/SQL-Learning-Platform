@@ -39,4 +39,10 @@ export class AuthController {
     const user = await this.authService.getUserProfile(userId);
     return { user };
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('students')
+    async getAllStudents() {
+        return this.authService.getAllStudents();
+    }
 }
