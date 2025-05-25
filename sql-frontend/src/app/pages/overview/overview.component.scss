@@ -2,11 +2,37 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  position: relative; /* Für die absolute Positionierung der Navigation */
 
   h1 {
     margin-bottom: 20px;
     color: #333;
   }
+}
+
+/* Styling für die Navigation Links */
+.navigation-links {
+  position: absolute;
+  top: 0;
+  left: 20px; /* Abstand vom linken Rand */
+  display: flex;
+  gap: 15px; /* Abstand zwischen den Links */
+  margin-bottom: 30px;
+}
+
+.nav-link {
+  color: #0066cc; /* Link-Farbe */
+  text-decoration: none; /* Keine Unterstreichung */
+  font-weight: 500;
+  padding: 5px 8px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.nav-link:hover {
+  background-color: #e6f0ff; /* Hintergrundfarbe bei Hover */
+  color: #004499; /* Dunklere Farbe bei Hover */
+  text-decoration: underline; /* Unterstreichung bei Hover */
 }
 
 .task-list-container {
