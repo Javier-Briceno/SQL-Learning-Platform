@@ -41,6 +41,25 @@ export class DatenbankenComponent {
   }
 
   // Zum Löschen einer Datenbank
-  
-  onDeleteDatabase(dbName: string): void { }
+  onDeleteDatabase(dbName: string): void {
+
+    // Sicherheitsabfrage vor dem Löschen
+    if (confirm(`Sind Sie sicher, dass Sie die Datenbank '${dbName}' unwiderruflich löschen möchten?`)) {
+      this.isLoading = true; 
+      this.errorMsg = null;  
+
+      // DELETE-Anfrage an das Backend senden
+      this.http.delete<void>(`${this.baseUrl}/databases/delete/${dbName}`) 
+        .subscribe({
+          next: () => {
+            console.log(`Datenbank ${dbName} erfolgreich gelöscht.`);
+            this.isLoading = false;
+            this.loadDatabases(); 
+          },
+          error: (err: HttpErrorResponse) => {
+            console.error(`Fehler beim Löschen der Datenbank ${dbName}:`, err);
+          }
+        });
+    }
+  }
 }
