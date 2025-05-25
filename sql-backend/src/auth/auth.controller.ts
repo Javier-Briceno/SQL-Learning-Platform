@@ -34,8 +34,15 @@ export class AuthController {
 
     @UseGuards(AuthGuard('jwt'))
     @Get('profile')
-    getProfile(@Request() req: any) {
-        // req.user enthält hier dein User-Objekt (z.B. ohne Passwort)
-        return { user: req.user };
+    async getProfile(@Request() req: any) {
+    const userId = req.user.id;
+    const user = await this.authService.getUserProfile(userId);
+    return { user };
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('students')
+    async getAllStudents() {
+        return this.authService.getAllStudents();
     }
 }
