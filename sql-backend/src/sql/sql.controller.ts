@@ -1,4 +1,4 @@
-import { Controller, Post, UploadedFile, Get, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, Delete, Param, UploadedFile, Get, UseInterceptors } from '@nestjs/common';
 import { SqlService } from './sql.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
@@ -19,6 +19,11 @@ export class SqlController {
   @Get('databases')
   async getAllDatabases() {
     return await this.sqlService.listDatabases();
+  }
+
+  @Delete('delete/:dbName')
+  async deleteDatabaseAlternative(@Param('dbName') dbName: string) {
+    return this.sqlService.deleteDatabase(dbName);
   }
 }
 
