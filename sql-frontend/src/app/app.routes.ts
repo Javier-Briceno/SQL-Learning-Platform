@@ -8,6 +8,7 @@ import { MeineAufgabenComponent } from './tutor-dashboard/meine-aufgaben/meine-a
 import { ProfileComponent } from './user/profile/profile.component';
 import { OverviewComponent } from './pages/overview/overview.component';
 import { authGuard } from './auth/auth.guard';
+import { adminGuard, tutorGuard } from './auth/role.guard';
 import { SqlUploadComponent } from './tutor-dashboard/sql-upload/sql-upload.component';
 import { DatenbankenComponent } from './tutor-dashboard/datenbanken/datenbanken.component';
 
@@ -25,19 +26,17 @@ export const routes: Routes = [
     path: 'overview',
     component: OverviewComponent,
     canActivate: [authGuard]
-  },
-  {
+  },  {
     path: 'admin',
     component: AdminDashboardComponent,
-    canActivate: [authGuard],
-    // data: { roles: ['ADMIN'] } wenn Rollenüberprüfung implementiert ist
+    canActivate: [adminGuard],
     children: [
       { path: 'users', component: UserManagementComponent },
       { path: 'settings', component: SettingsManagementComponent },
     ]
   },
   { path: 'tutor-dashboard', component: TutorDashboardComponent, 
-    canActivate: [authGuard],
+    canActivate: [tutorGuard],
     children: [
     { path: 'students', component: StudentOverviewComponent },
     { path: 'aufgaben', component: MeineAufgabenComponent },

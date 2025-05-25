@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, throwError, BehaviorSubject, of } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
@@ -150,10 +150,31 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     this.isAuthenticatedSubject.next(false);
   }
-
   // Prüft, ob ein Benutzer eingeloggt ist
   isLoggedIn(): boolean {
     return this.hasToken();
+  }
+  
+  // Prüft, ob der eingeloggte Benutzer die angegebene Rolle hat
+  hasRole(role: string): Observable<boolean> {
+    if (!this.isLoggedIn()) {
+      return of(false);
+    }
+    
+    return this.getProfile().pipe(
+      map(user => user.role === role),
+      catchError(() => of(false))
+    );
+  }
+  
+  // Prüft, ob der eingeloggte Benutzer ein Admin ist
+  isAdmin(): Observable<boolean> {
+    return this.hasRole('ADMIN');
+  }
+  
+  // Prüft, ob der eingeloggte Benutzer ein Tutor ist
+  isTutor(): Observable<boolean> {
+    return this.hasRole('TUTOR');
   }
 
   logout(): void {
