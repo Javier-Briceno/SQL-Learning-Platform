@@ -8,10 +8,10 @@
     <a href="#" class="nav-link">Aufgabensuche</a>
     
     <!-- Link zum Tutor-Dashboard -->
-    <a routerLink="/tutor-dashboard" class="nav-link">Tutor-Dashboard</a>
+    <a routerLink="/tutor-dashboard" class="nav-link" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">Tutor-Dashboard</a>
     
     <!-- Link zum Admin-Dashboard -->
-    <a routerLink="/admin" class="nav-link">Admin-Dashboard</a>
+    <a routerLink="/admin" class="nav-link" *ngIf="isAdmin$ | async">Admin-Dashboard</a>
   </div>
 
   <h1>Übersicht</h1>

@@ -28,15 +28,13 @@ export class AppComponent implements OnInit {
     this.router.events.subscribe(() => {
       this.currentUrl = this.router.url;
     });
+      this.isAdmin$ = this.authService.isAdmin();
+      this.isTutor$ = this.authService.isTutor();
   }
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
-    
-    if (this.isLoggedIn) {
-      this.isAdmin$ = this.authService.isAdmin();
-      this.isTutor$ = this.authService.isTutor();
-      
+
       // Benutzername für das Menü laden
       this.authService.user$.subscribe(user => {
         if (user) {
@@ -44,7 +42,6 @@ export class AppComponent implements OnInit {
         }
       });
     }
-  }
 
   logout() {
     this.authService.logout();

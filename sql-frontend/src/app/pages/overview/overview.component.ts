@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../auth/auth.service';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'app-overview',
@@ -10,6 +12,11 @@ import { RouterModule } from '@angular/router';
   styleUrl: './overview.component.scss'
 })
 export class OverviewComponent {
-  // Diese Komponente kann später um Logik erweitert werden
-  // z.B. Laden von Aufgaben usw.
+  isAdmin$: Observable<boolean> = of(false);
+  isTutor$: Observable<boolean> = of(false);
+
+  constructor(private authService: AuthService) {
+    this.isAdmin$ = this.authService.isAdmin();
+    this.isTutor$ = this.authService.isTutor();
+  }
 }

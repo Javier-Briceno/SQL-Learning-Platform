@@ -4,10 +4,22 @@
       <mat-icon>account_circle</mat-icon>
     </button>
     <mat-menu #profileMenu="matMenu">
-      <button mat-menu-item routerLink="/profile">Profil</button>
-      <button mat-menu-item routerLink="/tutor-dashboard">Tutor Dashboard</button>
-      <button mat-menu-item routerLink="/admin">Admin Dashboard</button>
-      <button mat-menu-item (click)="logout()">Logout</button>
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        <span>Profil</span>
+      </button>
+      <button mat-menu-item routerLink="/tutor-dashboard" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">
+        <mat-icon>school</mat-icon>
+        <span>Tutor Dashboard</span>
+      </button>
+      <button mat-menu-item routerLink="/admin" *ngIf="isAdmin$ | async">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>Admin Dashboard</span>
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
     </mat-menu>
   </div>
 </ng-container>
