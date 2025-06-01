@@ -169,12 +169,12 @@ export class AuthService {
   
   // Prüft, ob der eingeloggte Benutzer ein Admin ist
   isAdmin(): Observable<boolean> {
-    return this.hasRole('ADMIN');
+    return this.user$.pipe(map(user => user?.role === 'ADMIN'));
   }
   
   // Prüft, ob der eingeloggte Benutzer ein Tutor ist
   isTutor(): Observable<boolean> {
-    return this.hasRole('TUTOR');
+    return this.user$.pipe(map(user => user?.role === 'TUTOR'));
   }
 
   logout(): void {

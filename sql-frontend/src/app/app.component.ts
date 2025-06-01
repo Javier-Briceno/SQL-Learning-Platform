@@ -28,11 +28,11 @@ export class AppComponent implements OnInit {
     this.router.events.subscribe(() => {
       this.currentUrl = this.router.url;
     });
-      this.isAdmin$ = this.authService.isAdmin();
-      this.isTutor$ = this.authService.isTutor();
   }
 
   ngOnInit(): void {
+    this.isAdmin$ = this.authService.isAdmin();
+    this.isTutor$ = this.authService.isTutor();
     this.isLoggedIn = this.authService.isLoggedIn();
 
       // Benutzername für das Menü laden
