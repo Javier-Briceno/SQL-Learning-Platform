@@ -42,4 +42,9 @@ export class UserManagementComponent implements OnInit {
       }
     });
   }
+
+  blockUser(userId: number): void {
+    // Logik zum Sperren des Benutzers wird hier später implementiert:
+    console.log(`Benutzer mit ID ${userId} sperren`);
+  }
 }
