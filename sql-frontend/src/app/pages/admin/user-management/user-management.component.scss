@@ -1,0 +1,59 @@
+.user-overview-container {
+  margin: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 15px;
+    color: #555;
+  }
+
+  mat-error {
+    display: block;
+    background-color: #ffebee;
+    color: #d32f2f;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .mat-elevation-z2-user-table {
+    width: 100%;
+    margin-top: 20px;
+
+    th.mat-header-cell {
+      background-color: #3f51b5; 
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    td.mat-cell, th.mat-header-cell {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    tr.mat-row:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    tr.mat-row:last-child td.mat-cell {
+      border-bottom: none;
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #777;
+    font-style: italic;
+  }
+}
