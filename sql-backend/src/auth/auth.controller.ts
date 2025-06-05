@@ -45,4 +45,10 @@ export class AuthController {
     async getAllStudents() {
         return this.authService.getAllStudents();
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('users')
+    async getAllUsers() {
+        return this.authService.getAllUsers();
+    }
 }
