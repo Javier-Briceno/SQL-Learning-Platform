@@ -9,6 +9,7 @@ import { MatError } from '@angular/material/form-field';
 
 interface User {
   id: number;
+  role: string;
   name: string;
   email: string;
   createdAt: string;
@@ -16,6 +17,7 @@ interface User {
 }
 
 @Component({
+  selector: 'app-user-management',
   standalone: true,
   imports: [CommonModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatError],
   templateUrl: './user-management.component.html',
