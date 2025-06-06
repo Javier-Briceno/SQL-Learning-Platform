@@ -1,0 +1,136 @@
+<!-- Submission Detail View -->
+<div class="submission-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Lade Abgabe...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <h3>Fehler beim Laden</h3>
+        <p>{{ error }}</p>
+        <button mat-raised-button color="primary" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Zurück zur Übersicht
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Submission Detail Content -->
+  <div *ngIf="!loading && !error && submissionDetail" class="submission-content">
+    <!-- Header -->
+    <div class="header-section">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-info">
+        <h1>Abgabe Details</h1>
+        <div class="meta-info">
+          <span class="student-name">{{ submissionDetail.student.name }}</span>
+          <span class="separator">•</span>
+          <span class="worksheet-title">{{ submissionDetail.worksheet.title }}</span>
+        </div>
+      </div>
+      <div class="status-badge">
+        <mat-chip [color]="getStatusColor(submissionDetail.status)" selected>
+          {{ getStatusText(submissionDetail.status) }}
+        </mat-chip>
+      </div>
+    </div>
+
+    <!-- Student Information -->
+    <mat-card class="student-info-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>person</mat-icon>
+        <mat-card-title>Student Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Name:</strong>
+            <span>{{ submissionDetail.student.name }}</span>
+          </div>
+          <div class="info-item">
+            <strong>E-Mail:</strong>
+            <span>{{ submissionDetail.student.email }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Status:</strong>
+            <mat-chip [color]="getStatusColor(submissionDetail.status)" selected>
+              {{ getStatusText(submissionDetail.status) }}
+            </mat-chip>
+          </div>
+          <div class="info-item" *ngIf="submissionDetail.submittedAt">
+            <strong>Eingereicht am:</strong>
+            <span>{{ submissionDetail.submittedAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Worksheet Tasks and Answers -->
+    <mat-card class="answers-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>assignment</mat-icon>
+        <mat-card-title>Antworten des Students</mat-card-title>
+        <mat-card-subtitle>{{ submissionDetail.worksheet.title }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tasks-container">
+          <div *ngFor="let task of submissionDetail.worksheet.tasks; let i = index" class="task-item">            <!-- Task Question -->
+            <div class="task-question">
+              <h3>Aufgabe {{ i + 1 }}: {{ task.title }}</h3>
+              <p [innerHTML]="task.description"></p>
+            </div>
+
+            <!-- Student Answer -->
+            <div class="student-answer">
+              <h4>Antwort des Students:</h4>
+              <div class="answer-content">
+                <ng-container *ngIf="getAnswerForTask(task.id); else noAnswer">
+                  <pre>{{ getAnswerForTask(task.id)?.content }}</pre>
+                </ng-container>
+                <ng-template #noAnswer>
+                  <span class="no-answer">Keine Antwort eingegeben</span>
+                </ng-template>
+              </div>
+            </div>            <!-- Answer Evaluation Section -->
+            <div class="evaluation-section">
+              <h4>Bewertung:</h4>
+              <mat-form-field appearance="outline" class="evaluation-field">
+                <mat-label>Bewertung/Kommentar</mat-label>
+                <textarea
+                  matInput
+                  [value]="getAnswerForTask(task.id)?.content || ''"
+                  placeholder="Hier könnten Bewertungen eingegeben werden..."
+                  rows="3"
+                  readonly>
+                </textarea>
+              </mat-form-field>
+            </div>
+
+            <mat-divider *ngIf="i < submissionDetail.worksheet.tasks.length - 1"></mat-divider>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="saveEvaluation()" [disabled]="saving">
+        <mat-icon>save</mat-icon>
+        <span *ngIf="!saving">Bewertung speichern</span>
+        <span *ngIf="saving">Speichert...</span>
+      </button>
+      <button mat-stroked-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Zurück zur Übersicht
+      </button>
+    </div>
+  </div>
+</div>
