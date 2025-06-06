@@ -6,6 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
+
 
 interface User {
   id: number;
@@ -20,7 +23,7 @@ interface User {
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, MatSnackBarModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule],
+  imports: [MatButtonModule,CommonModule, MatSnackBarModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatTooltipModule],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss'
 })

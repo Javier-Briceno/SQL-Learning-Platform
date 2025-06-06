@@ -145,6 +145,7 @@ export class AuthService {
         createdAt: true,
         updatedAt: true,
         name: true,
+        isBanned: true,
       },
     });
   }
