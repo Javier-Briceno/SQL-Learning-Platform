@@ -16,10 +16,10 @@ import { tap } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
-  public currentUrl = '';
+export class AppComponent implements OnInit {  public currentUrl = '';
   public isAdmin$: Observable<boolean> = of(false);
   public isTutor$: Observable<boolean> = of(false);
+  public isStudent$: Observable<boolean> = of(false);
   public isLoggedIn = false;
   public userName = '';
 
@@ -29,10 +29,10 @@ export class AppComponent implements OnInit {
       this.currentUrl = this.router.url;
     });
   }
-
   ngOnInit(): void {
     this.isAdmin$ = this.authService.isAdmin();
     this.isTutor$ = this.authService.isTutor();
+    this.isStudent$ = this.authService.isStudent();
     this.isLoggedIn = this.authService.isLoggedIn();
 
       // Benutzername für das Menü laden

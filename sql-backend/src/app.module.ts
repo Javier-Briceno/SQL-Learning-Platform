@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { SqlModule } from './sql/sql.module'; 
+import { WorksheetsModule } from './worksheets/worksheets.module';
+import { SubmissionsModule } from './submissions/submissions.module';
 
 @Module({
   imports: [
@@ -13,7 +15,9 @@ import { SqlModule } from './sql/sql.module';
     }),
     AuthModule, 
     PrismaModule,
-    SqlModule
+    SqlModule,
+    WorksheetsModule,
+    SubmissionsModule
   ],
   controllers: [AppController],
   providers: [AppService],

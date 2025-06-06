@@ -3,3 +3,13 @@
 
 html, body { height: 100%; overflow-x: auto; overflow-y: auto; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+// Error Snackbar Styling
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+  
+  .mat-mdc-snack-bar-label {
+    white-space: pre-line;
+  }
+}
