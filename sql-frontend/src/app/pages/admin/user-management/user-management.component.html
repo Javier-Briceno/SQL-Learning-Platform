@@ -5,7 +5,10 @@
     <span>Lade Benutzer...</span>
   </div>
 
-  <mat-error *ngIf="error">{{ error }}</mat-error>
+  <div *ngIf="error" class="dismissible-error">
+    <span>{{ error }}</span>
+    <button (click)="error = null">✕</button>
+  </div>
 
   <div *ngIf="!loading && users.length > 0">
     <table mat-table [dataSource]="users" class="mat-elevation-z2-user-table">
