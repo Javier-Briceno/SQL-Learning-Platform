@@ -1,0 +1,212 @@
+<div class="student-dashboard">
+  <div class="header">
+    <h1>
+      <mat-icon>school</mat-icon>
+      Student Dashboard
+    </h1>
+    <p>Bearbeiten Sie Übungsblätter und verwalten Sie Ihre Abgaben</p>
+  </div>
+
+  <mat-tab-group 
+    [(selectedIndex)]="selectedTabIndex" 
+    (selectedTabChange)="onTabChange($event.index)"
+    class="dashboard-tabs">
+    
+    <!-- Tab 1: Verfügbare Übungsblätter -->
+    <mat-tab label="Verfügbare Übungsblätter">
+      <div class="tab-content">
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoadingWorksheets" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Lade verfügbare Übungsblätter...</p>
+        </div>
+
+        <!-- Worksheets Liste -->
+        <div *ngIf="!isLoadingWorksheets" class="worksheets-grid">
+          
+          <!-- Kein Worksheet vorhanden -->
+          <div *ngIf="availableWorksheets.length === 0" class="empty-state">
+            <mat-icon>assignment</mat-icon>
+            <h3>Keine Übungsblätter verfügbar</h3>
+            <p>Derzeit sind keine Übungsblätter zum Bearbeiten verfügbar.</p>
+          </div>
+
+          <!-- Worksheet Cards -->
+          <mat-card *ngFor="let worksheet of availableWorksheets" class="worksheet-card">
+            <mat-card-header>
+              <div mat-card-avatar>
+                <mat-icon [color]="getWorksheetStatusColor(worksheet)">
+                  {{ getWorksheetStatusIcon(worksheet) }}
+                </mat-icon>
+              </div>
+              <mat-card-title>{{ worksheet.title }}</mat-card-title>
+              <mat-card-subtitle>{{ worksheet.tutor.name }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <p *ngIf="worksheet.description" class="description">
+                {{ worksheet.description }}
+              </p>
+              
+              <div class="worksheet-info">
+                <div class="info-item">
+                  <mat-icon>storage</mat-icon>
+                  <span>{{ worksheet.database }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <mat-icon>assignment</mat-icon>
+                  <span>{{ worksheet._count.tasks }} Aufgaben</span>
+                </div>
+                
+                <div class="info-item">
+                  <mat-icon>person</mat-icon>
+                  <span>{{ worksheet.tutor.name }}</span>
+                </div>
+              </div>
+
+              <!-- Status Information -->
+              <div class="status-info">
+                <mat-chip [color]="getWorksheetStatusColor(worksheet)" selected>
+                  <mat-icon matChipAvatar>{{ getWorksheetStatusIcon(worksheet) }}</mat-icon>
+                  {{ getWorksheetStatusText(worksheet) }}
+                </mat-chip>
+                
+                <span *ngIf="worksheet.submission && worksheet.isSubmitted" class="submitted-date">
+                  Abgegeben: {{ formatDate(worksheet.submission.submittedAt!) }}
+                </span>
+                
+                <span *ngIf="worksheet.submission && !worksheet.isSubmitted" class="last-edited">
+                  Zuletzt bearbeitet: {{ formatDate(worksheet.submission.updatedAt) }}
+                </span>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions align="end">
+              <button 
+                *ngIf="!worksheet.hasSubmission"
+                mat-raised-button 
+                color="primary"
+                (click)="startWorksheet(worksheet)">
+                <mat-icon>play_arrow</mat-icon>
+                Starten
+              </button>
+              
+              <button 
+                *ngIf="worksheet.hasSubmission && !worksheet.isSubmitted"
+                mat-raised-button 
+                color="accent"
+                (click)="continueWorksheet(worksheet)">
+                <mat-icon>edit</mat-icon>
+                Weiter bearbeiten
+              </button>
+              
+              <button 
+                *ngIf="worksheet.isSubmitted"
+                mat-stroked-button 
+                (click)="continueWorksheet(worksheet)">
+                <mat-icon>visibility</mat-icon>
+                Ansehen
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Meine Abgaben -->
+    <mat-tab label="Meine Abgaben">
+      <div class="tab-content">
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoadingSubmissions" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Lade Ihre Abgaben...</p>
+        </div>
+
+        <!-- Submissions Liste -->
+        <div *ngIf="!isLoadingSubmissions" class="submissions-grid">
+          
+          <!-- Keine Submissions vorhanden -->
+          <div *ngIf="mySubmissions.length === 0" class="empty-state">
+            <mat-icon>assignment_turned_in</mat-icon>
+            <h3>Keine Abgaben vorhanden</h3>
+            <p>Sie haben noch keine Übungsblätter bearbeitet oder abgegeben.</p>
+          </div>
+
+          <!-- Submission Cards -->
+          <mat-card *ngFor="let submission of mySubmissions" class="submission-card">
+            <mat-card-header>
+              <div mat-card-avatar>
+                <mat-icon [color]="getSubmissionStatusColor(submission)">
+                  {{ getSubmissionStatusIcon(submission) }}
+                </mat-icon>
+              </div>
+              <mat-card-title>{{ submission.worksheet.title }}</mat-card-title>
+              <mat-card-subtitle>{{ submission.worksheet.tutor.name }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <p *ngIf="submission.worksheet.description" class="description">
+                {{ submission.worksheet.description }}
+              </p>
+              
+              <div class="submission-info">
+                <div class="info-item">
+                  <mat-icon>storage</mat-icon>
+                  <span>{{ submission.worksheet.database }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <mat-icon>assignment</mat-icon>
+                  <span>{{ submission.worksheet._count.tasks }} Aufgaben</span>
+                </div>
+                
+                <div class="info-item">
+                  <mat-icon>rate_review</mat-icon>
+                  <span>{{ submission._count.answers }} Antworten</span>
+                </div>
+              </div>
+
+              <!-- Status und Datum Information -->
+              <div class="status-info">
+                <mat-chip [color]="getSubmissionStatusColor(submission)" selected>
+                  <mat-icon matChipAvatar>{{ getSubmissionStatusIcon(submission) }}</mat-icon>
+                  {{ getSubmissionStatusText(submission) }}
+                </mat-chip>
+                
+                <span *ngIf="submission.status === 'SUBMITTED'" class="submitted-date">
+                  Abgegeben: {{ formatDate(submission.submittedAt!) }}
+                </span>
+                
+                <span *ngIf="submission.status === 'DRAFT'" class="last-edited">
+                  Zuletzt bearbeitet: {{ formatDate(submission.updatedAt) }}
+                </span>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions align="end">
+              <button 
+                *ngIf="submission.status === 'DRAFT'"
+                mat-raised-button 
+                color="accent"
+                (click)="viewSubmission(submission)">
+                <mat-icon>edit</mat-icon>
+                Weiter bearbeiten
+              </button>
+              
+              <button 
+                *ngIf="submission.status === 'SUBMITTED'"
+                mat-stroked-button 
+                (click)="viewSubmission(submission)">
+                <mat-icon>visibility</mat-icon>
+                Ansehen
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
