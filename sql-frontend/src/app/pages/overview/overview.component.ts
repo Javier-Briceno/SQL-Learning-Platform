@@ -14,9 +14,11 @@ import { Observable, of } from 'rxjs';
 export class OverviewComponent {
   isAdmin$: Observable<boolean> = of(false);
   isTutor$: Observable<boolean> = of(false);
+  isStudent$: Observable<boolean> = of(false);
 
   constructor(private authService: AuthService) {
     this.isAdmin$ = this.authService.isAdmin();
     this.isTutor$ = this.authService.isTutor();
+    this.isStudent$ = this.authService.isStudent();
   }
 }

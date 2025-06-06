@@ -1,11 +1,13 @@
 <div class="overview-container">
   <!-- Navigation Links - Positioniert oben links auf der Seite -->
-  <div class="navigation-links">
-    <!-- Link zur aktuellen Übersichtsseite (Aufgabenliste) -->
+  <div class="navigation-links">    <!-- Link zur aktuellen Übersichtsseite (Aufgabenliste) -->
     <a routerLink="/overview" class="nav-link">Aufgabenliste</a>
     
     <!-- Link zur Aufgabensuche (noch nicht funktional) -->
     <a href="#" class="nav-link">Aufgabensuche</a>
+    
+    <!-- Link zum Student-Dashboard -->
+    <a routerLink="/student" class="nav-link" *ngIf="(isStudent$ | async) || (isAdmin$ | async)">Student-Dashboard</a>
     
     <!-- Link zum Tutor-Dashboard -->
     <a routerLink="/tutor-dashboard" class="nav-link" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">Tutor-Dashboard</a>
