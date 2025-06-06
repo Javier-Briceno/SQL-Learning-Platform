@@ -1,0 +1,536 @@
+// Worksheet Creator Styles
+
+.worksheet-creator-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  height: calc(100vh - 120px);
+  padding: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+.left-panel {
+  overflow-y: auto;
+  border-right: 1px solid #e0e0e0;
+  padding-right: 20px;
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    padding-right: 0;
+    margin-bottom: 20px;
+  }
+}
+
+.right-panel {
+  overflow-y: auto;
+  padding-left: 20px;
+
+  @media (max-width: 1024px) {
+    padding-left: 0;
+  }
+}
+
+.worksheet-form-card {
+  height: 100%;
+  
+  mat-card-header {
+    margin-bottom: 24px;
+    
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    mat-card-subtitle {
+      color: #666;
+      margin-top: 8px;
+    }
+  }
+}
+
+// Form Sections
+.worksheet-basics {
+  margin-bottom: 32px;
+  
+  h3 {
+    color: #333;
+    margin-bottom: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.tasks-section {
+  margin-top: 32px;
+  
+  .tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    h3 {
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+}
+
+// Task Panels
+.tasks-list {
+  .task-panel {
+    margin-bottom: 16px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    mat-expansion-panel-header {
+      .mat-content {
+        align-items: center;
+      }
+      
+      .task-title {
+        margin-left: 8px;
+        font-weight: 500;
+        flex-grow: 1;
+      }
+      
+      .task-type-badge {
+        margin-left: auto;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        
+        &.knowledge-badge {
+          background-color: #e3f2fd;
+          color: #1976d2;
+        }
+        
+        &.text-badge {
+          background-color: #f3e5f5;
+          color: #7b1fa2;
+        }
+      }
+    }
+  }
+}
+
+.task-content {
+  padding: 16px 0;
+  
+  .solution-field {
+    border-left: 3px solid #1976d2;
+    padding-left: 16px;
+    margin-left: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+  }
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+// No Tasks State
+.no-tasks {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #f8f9fa;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    color: #999;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+}
+
+// Error Container
+.error-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+  margin: 16px 0;
+  color: #c62828;
+  
+  mat-icon {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    mat-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+    
+    mat-spinner {
+      margin-right: 8px;
+    }
+  }
+}
+
+// SQL Executor Container
+.sql-executor-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  .database-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    color: #1976d2;
+    
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+  }
+  
+  app-sql-query-executor {
+    flex: 1;
+    display: block;
+    overflow: hidden;
+  }
+}
+
+// Loading Overlay
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  
+  mat-spinner {
+    margin-bottom: 20px;
+  }
+  
+  p {
+    color: #666;
+    font-size: 1rem;
+  }
+}
+
+// Utility Classes
+.full-width {
+  width: 100%;
+}
+
+// Form Field Improvements
+mat-form-field {
+  margin-bottom: 16px;
+  
+  &.full-width {
+    width: 100%;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .worksheet-creator-layout {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .left-panel,
+  .right-panel {
+    padding: 0;
+  }
+  
+  .tasks-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    
+    h3 {
+      text-align: center;
+    }
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  .task-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .worksheet-creator-layout {
+    padding: 12px;
+  }
+  
+  .worksheet-form-card {
+    mat-card-header {
+      mat-card-title {
+        font-size: 1.25rem;
+      }
+    }
+  }
+  
+  .task-panel {
+    mat-expansion-panel-header {
+      .task-title {
+        font-size: 0.9rem;
+      }
+      
+      .task-type-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+      }
+    }
+  }
+}
+
+// Preview Mode Styles
+.preview-container {
+  .worksheet-preview-card {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+  }
+
+  .worksheet-info {
+    margin-bottom: 24px;
+    
+    .worksheet-title {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #1976d2;
+      margin-bottom: 12px;
+    }
+    
+    .worksheet-description {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    .worksheet-meta {
+      mat-chip-listbox {
+        display: flex;
+        gap: 8px;
+        
+        mat-chip-option {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: #f5f5f5;
+          color: #333;
+          
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+    }
+  }
+
+  .tasks-preview {
+    .task-preview {
+      margin-bottom: 24px;
+      
+      .task-card {
+        border-left: 4px solid #1976d2;
+        
+        &:hover {
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        mat-card-header {
+          mat-card-title {
+            .task-number {
+              font-weight: 700;
+              color: #1976d2;
+              margin-right: 8px;
+            }
+            
+            .task-title {
+              font-weight: 500;
+            }
+          }
+          
+          mat-card-subtitle {
+            margin-top: 8px;
+            
+            mat-chip {
+              font-size: 0.8rem;
+              height: 24px;
+              
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+              }
+            }
+          }
+        }
+        
+        mat-card-content {
+          .task-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #007bff;
+          }
+          
+          .student-answer-area {
+            margin-bottom: 20px;
+            
+            mat-form-field {
+              background: #fafafa;
+              
+              textarea {
+                background: transparent;
+              }
+            }
+          }
+          
+          .solution-preview {
+            margin-top: 16px;
+            
+            .solution-content {
+              background: #fff3cd;
+              border: 1px solid #ffeaa7;
+              border-radius: 8px;
+              padding: 16px;
+              
+              h4 {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #856404;
+                margin: 0 0 12px 0;
+                font-size: 1rem;
+                
+                mat-icon {
+                  color: #f39c12;
+                }
+              }
+              
+              .solution-text {
+                color: #856404;
+                margin: 0;
+                font-weight: 500;
+                line-height: 1.5;
+                background: #fff;
+                padding: 12px;
+                border-radius: 4px;
+                border: 1px solid #f1c40f;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .no-tasks-preview {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      color: #bbb;
+    }
+    
+    p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+  }
+
+  .preview-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 20px;
+  }
+}
+
+// Knowledge task specific styling in preview
+.task-card .task-preview.knowledge-task {
+  border-left-color: #9c27b0;
+}

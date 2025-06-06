@@ -1,0 +1,284 @@
+<!-- Zwei-geteiltes Layout: Links Aufgabenerstellung, Rechts SQL Query Executor -->
+<div class="worksheet-creator-layout">
+  
+  <!-- Linke Seite: Aufgabenerstellung oder Vorschau -->
+  <div class="left-panel">
+    
+    <!-- PREVIEW MODE: Studenten-Ansicht -->
+    <div *ngIf="isPreviewMode" class="preview-container">
+      <mat-card class="worksheet-preview-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>visibility</mat-icon>
+            {{ worksheetForm.get('title')?.value || 'Übungsblatt Vorschau' }}
+          </mat-card-title>
+          <mat-card-subtitle>
+            Vorschau - So sehen Studenten das Übungsblatt
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Übungsblatt Info -->
+          <div class="worksheet-info">
+            <h2 class="worksheet-title">{{ worksheetForm.get('title')?.value }}</h2>
+            <p *ngIf="worksheetForm.get('description')?.value" class="worksheet-description">
+              {{ worksheetForm.get('description')?.value }}
+            </p>
+            <div class="worksheet-meta">
+              <mat-chip-listbox>
+                <mat-chip-option>
+                  <mat-icon>storage</mat-icon>
+                  Datenbank: {{ worksheetForm.get('database')?.value }}
+                </mat-chip-option>
+                <mat-chip-option>
+                  <mat-icon>assignment</mat-icon>
+                  {{ tasksArray.length }} Aufgabe{{ tasksArray.length !== 1 ? 'n' : '' }}
+                </mat-chip-option>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Aufgaben in Studenten-Ansicht -->
+          <div class="tasks-preview">
+            <h3>Aufgaben</h3>
+            <div *ngFor="let taskGroup of tasksArray.controls; let i = index" class="task-preview">
+              <mat-card class="task-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <span class="task-number">Aufgabe {{ i + 1 }}</span>
+                    <span class="task-title">{{ taskGroup.get('title')?.value }}</span>
+                  </mat-card-title>                  <mat-card-subtitle>
+                    <mat-chip color="primary">
+                      <mat-icon>text_fields</mat-icon>
+                      Textaufgabe
+                    </mat-chip>
+                  </mat-card-subtitle>
+                </mat-card-header>
+                
+                <mat-card-content>
+                  <div class="task-description">
+                    {{ taskGroup.get('description')?.value }}
+                  </div>
+                    <!-- Antwortfeld für Studenten (simuliert) -->
+                  <div class="student-answer-area">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Ihre SQL-Abfrage</mat-label>
+                      <textarea matInput rows="4" placeholder="Schreiben Sie hier Ihre SQL-Abfrage..." disabled></textarea>
+                      <mat-hint>Dieses Feld ist in der Vorschau deaktiviert</mat-hint>
+                    </mat-form-field>                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- Keine Aufgaben -->
+            <div *ngIf="tasksArray.length === 0" class="no-tasks-preview">
+              <mat-icon>assignment</mat-icon>
+              <p>Dieses Übungsblatt enthält noch keine Aufgaben.</p>
+            </div>
+          </div>
+
+          <!-- Preview Aktionen -->
+          <div class="preview-actions">
+            <button type="button" mat-button (click)="goToOverview()">
+              <mat-icon>arrow_back</mat-icon>
+              Zur Übersicht
+            </button>
+            
+            <button type="button" mat-raised-button color="primary" (click)="editWorksheet()">
+              <mat-icon>edit</mat-icon>
+              Bearbeiten
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- EDIT MODE: Bearbeitungsformular -->
+    <mat-card *ngIf="!isPreviewMode" class="worksheet-form-card">
+      <mat-card-header>        <mat-card-title>
+          <mat-icon>assignment</mat-icon>
+          {{ isEditing ? 'Übungsblatt bearbeiten' : 'Neues Übungsblatt erstellen' }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          Erstellen Sie SQL-Übungsaufgaben für Ihre Studenten
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="worksheetForm" (ngSubmit)="saveWorksheet()">          
+          <!-- Worksheet-Grunddaten -->
+          <div class="worksheet-basics">
+            <h3>Grunddaten</h3>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Titel des Übungsblatts</mat-label>
+              <input matInput formControlName="title" placeholder="z.B. SQL Grundlagen - Übung 1">
+              <mat-error *ngIf="titleControl?.invalid && titleControl?.touched">
+                <span *ngIf="titleControl?.errors?.['required']">Titel ist erforderlich</span>
+                <span *ngIf="titleControl?.errors?.['minlength']">Titel muss mindestens 3 Zeichen lang sein</span>
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Beschreibung (optional)</mat-label>
+              <textarea matInput formControlName="description" rows="3" 
+                placeholder="Kurze Beschreibung des Übungsblatts..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Zugeordnete Datenbank</mat-label>
+              <mat-select formControlName="database" [disabled]="isLoadingDatabases">
+                <mat-option *ngFor="let db of databases" [value]="db">
+                  <mat-icon>storage</mat-icon>
+                  {{ db }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Diese Datenbank wird im SQL Query Executor verwendet</mat-hint>
+              <mat-error *ngIf="databaseControl?.invalid && databaseControl?.touched">
+                Bitte wählen Sie eine Datenbank aus
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Aufgaben-Sektion -->
+          <div class="tasks-section">
+            <div class="tasks-header">
+              <h3>Aufgaben</h3>
+              <button type="button" mat-raised-button color="primary" (click)="addTask()">
+                <mat-icon>add</mat-icon>
+                Aufgabe hinzufügen
+              </button>
+            </div>
+
+            <!-- Aufgaben-Liste -->
+            <div class="tasks-list" formArrayName="tasks">
+              <mat-expansion-panel 
+                *ngFor="let taskGroup of tasksArray.controls; let i = index" 
+                [formGroupName]="i"
+                class="task-panel"
+                [expanded]="true">
+                  <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon color="primary">text_fields</mat-icon>
+                    <span class="task-title">
+                      {{ taskGroup.get('title')?.value || 'Neue Aufgabe' }}
+                    </span>
+                    <span class="task-type-badge text-badge">
+                      Textaufgabe
+                    </span>
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    Aufgabe {{ i + 1 }}
+                  </mat-panel-description>
+                </mat-expansion-panel-header>                <div class="task-content">
+                  <!-- Aufgaben-Titel -->
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Titel der Aufgabe</mat-label>
+                    <input matInput formControlName="title" placeholder="z.B. Einfache SELECT-Abfrage">
+                    <mat-error *ngIf="taskGroup.get('title')?.invalid && taskGroup.get('title')?.touched">
+                      Titel ist erforderlich
+                    </mat-error>
+                  </mat-form-field>
+
+                  <!-- Aufgaben-Beschreibung -->
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Aufgabenstellung</mat-label>
+                    <textarea matInput formControlName="description" rows="4" 
+                      placeholder="Beschreiben Sie hier die Aufgabenstellung..."></textarea>
+                    <mat-error *ngIf="taskGroup.get('description')?.invalid && taskGroup.get('description')?.touched">
+                      Aufgabenstellung ist erforderlich
+                    </mat-error>                  </mat-form-field>
+
+                  <!-- Aufgaben-Aktionen -->
+                  <div class="task-actions">
+                    <button type="button" mat-icon-button 
+                            (click)="moveTaskUp(i)" 
+                            [disabled]="i === 0"
+                            matTooltip="Nach oben verschieben">
+                      <mat-icon>keyboard_arrow_up</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button 
+                            (click)="moveTaskDown(i)" 
+                            [disabled]="i === tasksArray.length - 1"
+                            matTooltip="Nach unten verschieben">
+                      <mat-icon>keyboard_arrow_down</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button color="warn" 
+                            (click)="removeTask(i)"
+                            matTooltip="Aufgabe löschen">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </mat-expansion-panel>
+            </div>
+
+            <!-- Keine Aufgaben Meldung -->
+            <div *ngIf="tasksArray.length === 0" class="no-tasks">
+              <mat-icon>assignment</mat-icon>
+              <p>Noch keine Aufgaben erstellt. Fügen Sie Ihre erste Aufgabe hinzu!</p>
+            </div>
+          </div>
+
+          <!-- Fehlermeldung -->
+          <div *ngIf="errorMessage" class="error-container">
+            <mat-icon color="warn">error</mat-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+
+          <!-- Aktions-Buttons -->
+          <div class="form-actions">            <button type="button" mat-button (click)="goToOverview()">
+              <mat-icon>arrow_back</mat-icon>
+              Zur Übersicht
+            </button>
+            
+            <button type="button" mat-button 
+                    *ngIf="isEditing" 
+                    (click)="createNew()">
+              <mat-icon>add</mat-icon>
+              Neues Übungsblatt
+            </button>
+
+            <button type="button" mat-button 
+                    *ngIf="isEditing && worksheetId" 
+                    (click)="goToPreview()">
+              <mat-icon>visibility</mat-icon>
+              Vorschau
+            </button>
+
+            <button type="submit" 
+                    mat-raised-button 
+                    color="primary"
+                    [disabled]="worksheetForm.invalid || isSaving || tasksArray.length === 0">
+              <mat-icon *ngIf="!isSaving">save</mat-icon>
+              <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+              {{ isSaving ? 'Wird gespeichert...' : (isEditing ? 'Änderungen speichern' : 'Übungsblatt erstellen') }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Rechte Seite: SQL Query Executor -->
+  <div class="right-panel">
+    <div class="sql-executor-container">      <div class="database-info" *ngIf="databaseControl?.value">
+        <mat-icon>info</mat-icon>
+        <span>Aktuelle Datenbank: <strong>{{ databaseControl?.value }}</strong></span>
+      </div>
+      
+      <app-sql-query-executor></app-sql-query-executor>
+    </div>
+  </div>
+
+</div>
+
+<!-- Loading Overlay für Worksheet laden -->
+<div *ngIf="isLoadingWorksheet" class="loading-overlay">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Übungsblatt wird geladen...</p>
+</div>
