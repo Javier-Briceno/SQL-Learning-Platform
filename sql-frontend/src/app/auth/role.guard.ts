@@ -33,6 +33,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
   };
 };
 
-// Spezifische Guards für Admin und Tutor
+// Spezifische Guards für Admin, Tutor und Student
 export const adminGuard: CanActivateFn = roleGuard(['ADMIN']);
 export const tutorGuard: CanActivateFn = roleGuard(['TUTOR', 'ADMIN']); // Admin kann auch auf Tutor-Seiten zugreifen
+export const studentGuard: CanActivateFn = roleGuard(['STUDENT', 'ADMIN']); // Admin kann auch auf Student-Seiten zugreifen

@@ -63,14 +63,15 @@ export class AuthService {
         tap(response => {
           // Token speichern
           this.saveToken(response.access_token);
-          
-          // Je nach Benutzerrolle zu verschiedenen Dashboards navigieren
+            // Je nach Benutzerrolle zu verschiedenen Dashboards navigieren
           // Dies wird basierend auf dem User-Objekt entschieden, das noch geladen werden muss
           this.getProfile().subscribe(user => {
             if (user.role === 'ADMIN') {
               this.router.navigate(['/admin']);
             } else if (user.role === 'TUTOR') {
               this.router.navigate(['/tutor-dashboard']);
+            } else if (user.role === 'STUDENT') {
+              this.router.navigate(['/student']);
             } else {
               this.router.navigate(['/profile']);
             }
@@ -166,8 +167,7 @@ export class AuthService {
       catchError(() => of(false))
     );
   }
-  
-  // Prüft, ob der eingeloggte Benutzer ein Admin ist
+    // Prüft, ob der eingeloggte Benutzer ein Admin ist
   isAdmin(): Observable<boolean> {
     return this.user$.pipe(map(user => user?.role === 'ADMIN'));
   }
@@ -175,6 +175,11 @@ export class AuthService {
   // Prüft, ob der eingeloggte Benutzer ein Tutor ist
   isTutor(): Observable<boolean> {
     return this.user$.pipe(map(user => user?.role === 'TUTOR'));
+  }
+
+  // Prüft, ob der eingeloggte Benutzer ein Student ist
+  isStudent(): Observable<boolean> {
+    return this.user$.pipe(map(user => user?.role === 'STUDENT'));
   }
 
   logout(): void {
