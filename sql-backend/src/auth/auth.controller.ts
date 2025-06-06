@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Patch, HttpCode, Param, ParseIntPipe, HttpStatus, Get, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiResponse, ApiOperation} from '@nestjs/swagger';
@@ -50,5 +50,17 @@ export class AuthController {
     @Get('users')
     async getAllUsers() {
         return this.authService.getAllUsers();
+    }
+
+    @Patch('users/:id/ban')
+    @UseGuards(AuthGuard('jwt'))
+    async banUser(@Param('id', ParseIntPipe) userId: number, @Request() req) {
+        return this.authService.banUser(userId);
+    }
+
+    @Patch('users/:id/unban')
+    @UseGuards(AuthGuard('jwt'))
+    async unbanUser(@Param('id', ParseIntPipe) userId: number) {
+        return this.authService.unbanUser(userId);
     }
 }
