@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatError } from '@angular/material/form-field';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface User {
   id: number;
@@ -20,7 +21,7 @@ interface User {
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatError],
+  imports: [CommonModule, MatSnackBarModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatError],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss'
 })
@@ -31,7 +32,7 @@ export class UserManagementComponent implements OnInit {
 
   private apiUrl = 'http://localhost:3000/auth';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
     this.http.get<User[]>(`${this.apiUrl}/users`).subscribe({
@@ -51,6 +52,7 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         const user = this.users.find(u => u.id === userId);
         if (user) user.isBanned = true;
+        this.snackBar.open('Benutzer wurde gesperrt', 'OK', { duration: 3000 });
       },
       error: () => {
         this.error = 'Fehler beim Sperren des Benutzers';
@@ -63,6 +65,7 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         const user = this.users.find(u => u.id === userId);
         if (user) user.isBanned = false;
+        this.snackBar.open('Benutzer wurde entsperrt', 'OK', { duration: 3000 });
       },
       error: () => {
         this.error = 'Fehler beim Entsperren des Benutzers';
