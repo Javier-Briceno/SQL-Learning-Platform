@@ -159,4 +159,16 @@ export class AuthService {
       data: { isBanned: true },
     });
   }
+
+
+  async unbanUser(userId: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`Benutzer mit ID ${userId} nicht gefunden.`);
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: false },
+    });
+  }
 }
