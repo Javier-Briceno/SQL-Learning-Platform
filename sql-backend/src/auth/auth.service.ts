@@ -95,6 +95,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.isBanned) {
+      throw new ForbiddenException('Ihr Konto wurde gesperrt. Bitte wenden Sie sich an den Support.');
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
