@@ -2,6 +2,14 @@ import { Injectable, InternalServerErrorException, BadRequestException, NotFound
 import { Client } from 'pg';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Interface für Query-Ergebnisse
+export interface QueryResult {
+    columns: string[];
+    rows: any[];
+    rowCount: number;
+    executionTime?: number;
+}
+
 @Injectable()
 export class SqlService {
     constructor(private readonly prisma: PrismaService) { }
@@ -24,6 +32,144 @@ export class SqlService {
         }
     }
 
+    // Hilfsmethode, um eine Verbindung zu einer spezifischen Datenbank herzustellen
+    private async getDatabaseClient(databaseName: string): Promise<Client> {
+        const client = new Client({
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: databaseName,
+        });
+        try {
+            await client.connect();
+            return client;
+        } catch (error) {
+            console.error(`Fehler beim Verbinden mit der Datenbank ${databaseName}:`, error);
+            throw new InternalServerErrorException(`Verbindung zur Datenbank ${databaseName} fehlgeschlagen.`);
+        }
+    }
+
+    // Validiert SQL Query auf erlaubte Befehle
+    private validateQuery(query: string): void {
+        const normalizedQuery = query.trim().toLowerCase();
+        
+        // Erlaubte Befehle (Read-Only Operations)
+        const allowedCommands = [
+            'select',
+            'show',
+            'describe',
+            'desc',
+            'explain',
+            'with'  // für CTEs (Common Table Expressions)
+        ];
+
+        // Verbotene Befehle
+        const forbiddenCommands = [
+            'insert',
+            'update',
+            'delete',
+            'drop',
+            'create',
+            'alter',
+            'truncate',
+            'grant',
+            'revoke'
+        ];
+
+        const firstWord = normalizedQuery.split(/\s+/)[0];
+
+        // Prüfe auf verbotene Befehle
+        if (forbiddenCommands.includes(firstWord)) {
+            throw new BadRequestException(`SQL-Befehl '${firstWord.toUpperCase()}' ist nicht erlaubt. Nur Read-Only-Operationen sind gestattet.`);
+        }
+
+        // Prüfe auf erlaubte Befehle
+        if (!allowedCommands.includes(firstWord)) {
+            throw new BadRequestException(`SQL-Befehl '${firstWord.toUpperCase()}' ist nicht erkannt oder nicht erlaubt.`);
+        }
+
+        // Zusätzliche Validierungen
+        if (normalizedQuery.includes(';') && normalizedQuery.split(';').length > 2) {
+            throw new BadRequestException('Mehrere SQL-Statements sind nicht erlaubt.');
+        }
+    }
+
+    // Neue Methode für Query Execution
+    async executeQuery(query: string, databaseName: string): Promise<QueryResult> {
+        // Input Validierung
+        if (!query || query.trim().length === 0) {
+            throw new BadRequestException('SQL Query darf nicht leer sein.');
+        }
+
+        if (!databaseName || databaseName.trim().length === 0) {
+            throw new BadRequestException('Datenbankname darf nicht leer sein.');
+        }
+
+        // Prüfe ob Datenbank in verwalteten Datenbanken existiert
+        const managedDbs = await this.listDatabases();
+        if (!managedDbs.includes(databaseName)) {
+            throw new NotFoundException(`Datenbank '${databaseName}' wurde nicht gefunden oder ist nicht verfügbar.`);
+        }
+
+        // SQL Query validieren
+        this.validateQuery(query);
+
+        let client: Client | null = null;
+        const startTime = Date.now();
+
+        try {
+            // Verbindung zur Zieldatenbank herstellen
+            client = await this.getDatabaseClient(databaseName);            // Query mit Timeout ausführen (10 Sekunden)
+            const result = await Promise.race([
+                client.query(query),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Query Timeout')), 10000)
+                )
+            ]) as any;
+
+            const executionTime = Date.now() - startTime;
+
+            // Ergebnis formatieren
+            const queryResult: QueryResult = {
+                columns: result.fields ? result.fields.map((field: any) => field.name) : [],
+                rows: result.rows || [],
+                rowCount: result.rowCount || 0,
+                executionTime
+            };
+
+            console.log(`Query ausgeführt in ${executionTime}ms auf Datenbank ${databaseName}`);
+            return queryResult;
+
+        } catch (error) {
+            const executionTime = Date.now() - startTime;
+            console.error(`Query-Fehler nach ${executionTime}ms:`, error);
+
+            if (error.message === 'Query Timeout') {
+                throw new BadRequestException('Query-Timeout: Die Abfrage dauerte zu lange (max. 10 Sekunden).');
+            }
+
+            if (error.code) {
+                // PostgreSQL-spezifische Fehler
+                switch (error.code) {
+                    case '42P01':
+                        throw new BadRequestException(`Tabelle oder Relation existiert nicht: ${error.message}`);
+                    case '42703':
+                        throw new BadRequestException(`Spalte existiert nicht: ${error.message}`);
+                    case '42601':
+                        throw new BadRequestException(`SQL-Syntax-Fehler: ${error.message}`);
+                    default:
+                        throw new BadRequestException(`Datenbankfehler: ${error.message}`);
+                }
+            }
+
+            throw new InternalServerErrorException(`Unerwarteter Fehler bei der Query-Ausführung: ${error.message}`);
+        } finally {
+            if (client) {
+                await client.end();
+            }
+        }
+    }
 
     async executeSqlFile(sqlText: string) {
 
