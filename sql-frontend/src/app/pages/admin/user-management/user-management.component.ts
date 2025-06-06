@@ -14,6 +14,7 @@ interface User {
   email: string;
   createdAt: string;
   updatedAt: string;
+  isBanned?: boolean;
 }
 
 @Component({
@@ -28,10 +29,12 @@ export class UserManagementComponent implements OnInit {
   loading = true;
   error: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = 'http://localhost:3000/auth';
+
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
-    this.http.get<User[]>('http://localhost:3000/auth/users').subscribe({
+    this.http.get<User[]>(`${this.apiUrl}/users`).subscribe({
       next: (users) => {
         this.users = users;
         this.loading = false;
@@ -43,8 +46,27 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  blockUser(userId: number): void {
-    // Logik zum Sperren des Benutzers wird hier später implementiert:
-    console.log(`Benutzer mit ID ${userId} sperren`);
+  banUser(userId: number): void {
+    this.http.patch(`${this.apiUrl}/users/${userId}/ban`, {}).subscribe({
+      next: () => {
+        const user = this.users.find(u => u.id === userId);
+        if (user) user.isBanned = true;
+      },
+      error: () => {
+        this.error = 'Fehler beim Sperren des Benutzers';
+      }
+    });
+  }
+
+  unbanUser(userId: number): void {
+    this.http.patch(`${this.apiUrl}/users/${userId}/unban`, {}).subscribe({
+      next: () => {
+        const user = this.users.find(u => u.id === userId);
+        if (user) user.isBanned = false;
+      },
+      error: () => {
+        this.error = 'Fehler beim Entsperren des Benutzers';
+      }
+    });
   }
 }

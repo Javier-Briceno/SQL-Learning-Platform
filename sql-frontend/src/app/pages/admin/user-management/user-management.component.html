@@ -24,20 +24,24 @@
         <th mat-header-cell *matHeaderCellDef>Rolle</th>
         <td mat-cell *matCellDef="let user">{{ user.role }}</td>
       </ng-container>
-        
+
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef>Registriert am</th>
         <td mat-cell *matCellDef="let user">{{ user.createdAt | date:'dd.MM.yyyy' }}</td>
       </ng-container>
 
-     <ng-container matColumnDef="actions">
+      <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Aktionen</th>
         <td mat-cell *matCellDef="let user">
-          <button mat-stroked-button color="warn" (click)="blockUser(user.id)" matTooltip="Benutzer sperren">
+          <button *ngIf="!user.isBanned" mat-stroked-button color="warn" (click)="banUser(user.id)">
             Sperren
+          </button>
+          <button *ngIf="user.isBanned" mat-stroked-button color="primary" (click)="unbanUser(user.id)">
+            Entsperren
           </button>
         </td>
       </ng-container>
+
 
       <tr mat-header-row *matHeaderRowDef="['name', 'email', 'role', 'createdAt', 'actions']"></tr>
       <tr mat-row *matRowDef="let row; columns: ['name', 'email', 'role', 'createdAt', 'actions'];"></tr>
