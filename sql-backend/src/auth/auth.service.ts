@@ -1,24 +1,24 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
-import { ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
-import { Role } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService, 
+    private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService
-  ) {}
+  ) { }
 
 
   /////////////     Implementierung der Register-Methode    /////////////
-  
+
 
   async register(registerDto: RegisterDto) {
     const { email, password, name, tutorKey } = registerDto;
@@ -37,15 +37,15 @@ export class AuthService {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);      // Standardrolle ist STUDENT
       let role: Role = Role.STUDENT;
-      
+
       // Wenn ein Tutor-Key angegeben wurde, überprüfen, ob er gültig ist
       if (tutorKey) {
         const validTutorKey = this.configService.get<string>('TUTOR_REGISTRATION_KEY');
-        
+
         if (tutorKey !== validTutorKey) {
           throw new ForbiddenException('Ungültiger Tutor-Registrierungsschlüssel');
         }
-        
+
         // Wenn der Tutor-Key gültig ist, setze die Rolle auf TUTOR
         role = Role.TUTOR;
       }
@@ -78,9 +78,9 @@ export class AuthService {
     }
   }
 
-    /////////////     Implementierung der Login-Methode    /////////////
+  /////////////     Implementierung der Login-Methode    /////////////
 
-    async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
     });
@@ -95,30 +95,30 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { 
-      sub: user.id, 
+    const payload = {
+      sub: user.id,
       email: user.email,
-      role: user.role 
+      role: user.role
     };
-    
+
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
 
   async getUserProfile(userId: number) {
-  return this.prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-}
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
   async getAllStudents() {
     return this.prisma.user.findMany({
       where: { role: Role.STUDENT },
@@ -142,6 +142,21 @@ export class AuthService {
         updatedAt: true,
         name: true,
       },
+    });
+  }
+
+
+  async banUser(userId: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`Benutzer mit ID ${userId} nicht gefunden.`);
+    }
+    if (user.role === Role.ADMIN) {
+      throw new ForbiddenException('Administratoren können nicht gesperrt werden.');
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: true },
     });
   }
 }
