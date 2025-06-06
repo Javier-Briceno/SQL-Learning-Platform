@@ -1,0 +1,318 @@
+// Worksheet Overview Styles
+
+.worksheet-toolbar {
+  background-color: #2963a5;
+  color: white;
+  margin-bottom: 20px;
+
+  .toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.worksheet-overview-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  
+  p {
+    margin-top: 20px;
+    color: #666;
+    font-size: 1rem;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 60px 20px;
+  text-align: center;
+  grid-column: 1 / -1; // Nimmt die gesamte Breite des Grids ein
+
+  .empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .empty-icon {
+    font-size: 72px;
+    height: 72px;
+    width: 72px;
+    color: #bbb;
+    margin-bottom: 24px;
+    opacity: 0.8;
+  }
+
+  h2 {
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 400;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 32px;
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 400px;
+  }
+
+  .empty-action-button {
+    margin-top: 8px;
+    padding: 12px 24px;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+.worksheets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+  margin-bottom: 80px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.worksheet-card {
+  transition: all 0.3s ease;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .worksheet-avatar {
+    background-color: #356ba1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 20px;
+    }
+  }
+
+  mat-card-header {
+    position: relative;
+
+    .actions-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+  }
+
+  mat-card-title {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
+    line-height: 1.4;
+  }
+
+  .worksheet-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+
+    .database-info {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #2f3335;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+      }
+    }
+
+    .date-info {
+      color: #666;
+      font-size: 0.85rem;
+    }
+  }
+
+  .worksheet-description {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .no-description {
+    color: #999;
+    font-style: italic;
+    margin-bottom: 16px;
+  }
+
+  .task-stats {
+    margin-bottom: 12px;
+
+    .task-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      mat-chip-option {
+        font-size: 0.85rem;
+        
+        &[disabled] {
+          opacity: 0.8;
+        }
+
+        mat-icon {
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+
+  .no-tasks-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    color: #856404;
+    font-size: 0.9rem;
+
+    mat-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  mat-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      mat-icon {
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
+      }
+    }
+  }
+}
+
+.fab-create {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+
+  @media (min-width: 769px) {
+    display: none; // Verstecke FAB auf Desktop
+  }
+}
+
+// Menu Styles
+.delete-action {
+  color: #d32f2f !important;
+}
+
+// Responsive Improvements
+@media (max-width: 480px) {
+  .worksheet-overview-container {
+    padding: 16px;
+  }
+
+  .worksheet-toolbar {
+    .toolbar-title {
+      font-size: 1rem;
+    }
+  }
+
+  .worksheets-grid {
+    margin-bottom: 100px;
+  }
+
+  .worksheet-card {
+    mat-card-title {
+      font-size: 1.1rem;
+    }
+
+    .worksheet-meta {
+      font-size: 0.85rem;
+    }
+
+    mat-card-actions {
+      button {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
+    }
+  }
+}
+
+// Loading and Error States
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  p {
+    margin-top: 20px;
+    color: #666;
+  }
+}

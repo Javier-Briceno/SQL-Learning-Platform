@@ -1,0 +1,149 @@
+<!-- Toolbar -->
+<mat-toolbar class="worksheet-toolbar">
+  <button mat-icon-button (click)="goBackToDashboard()" matTooltip="Zurück zum Dashboard">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span class="toolbar-title">
+    <mat-icon>assignment</mat-icon>
+    Meine Übungsblätter
+  </span>
+  <span class="spacer"></span>
+  <button mat-raised-button color="primary" (click)="createWorksheet()">
+    <mat-icon>add</mat-icon>
+    Neues Übungsblatt
+  </button>
+</mat-toolbar>
+
+<!-- Hauptinhalt -->
+<div class="worksheet-overview-container">
+  
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Übungsblätter werden geladen...</p>
+  </div>
+  <!-- Worksheets Grid -->
+  <div *ngIf="!isLoading" class="worksheets-grid">
+    
+    <!-- Leere Liste -->
+    <div *ngIf="worksheets.length === 0" class="empty-state">
+      <div class="empty-content">
+        <mat-icon class="empty-icon">assignment</mat-icon>
+        <h2>Noch keine Übungsblätter erstellt</h2>
+        <p>Erstellen Sie Ihr erstes SQL-Übungsblatt für Ihre Studenten.</p>
+        <button mat-raised-button color="primary" (click)="createWorksheet()" class="empty-action-button">
+          <mat-icon>add</mat-icon>
+          Neues Übungsblatt erstellen
+        </button>
+      </div>
+    </div>
+
+    <!-- Worksheet Cards -->
+    <mat-card *ngFor="let worksheet of worksheets" class="worksheet-card">
+      <mat-card-header>
+        <div mat-card-avatar class="worksheet-avatar">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <mat-card-title>{{ worksheet.title }}</mat-card-title>
+        <mat-card-subtitle>
+          <div class="worksheet-meta">
+            <span class="database-info">
+              <mat-icon>storage</mat-icon>
+              {{ worksheet.database }}
+            </span>
+            <span class="date-info">
+              Aktualisiert: {{ formatDate(worksheet.updatedAt) }}
+            </span>
+          </div>
+        </mat-card-subtitle>
+        
+        <!-- Actions Menu -->
+        <button mat-icon-button [matMenuTriggerFor]="actionsMenu" class="actions-button">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #actionsMenu="matMenu">
+          <button mat-menu-item (click)="editWorksheet(worksheet.id)">
+            <mat-icon>edit</mat-icon>
+            <span>Bearbeiten</span>
+          </button>
+          <button mat-menu-item (click)="previewWorksheet(worksheet.id)">
+            <mat-icon>preview</mat-icon>
+            <span>Vorschau</span>
+          </button>
+          <button mat-menu-item (click)="duplicateWorksheet(worksheet)">
+            <mat-icon>content_copy</mat-icon>
+            <span>Duplizieren</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="deleteWorksheet(worksheet.id, worksheet.title)" class="delete-action">
+            <mat-icon color="warn">delete</mat-icon>
+            <span>Löschen</span>
+          </button>
+        </mat-menu>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Beschreibung -->
+        <p *ngIf="worksheet.description" class="worksheet-description">
+          {{ worksheet.description }}
+        </p>
+        <p *ngIf="!worksheet.description" class="no-description">
+          Keine Beschreibung verfügbar
+        </p>
+
+        <!-- Task Statistics -->
+        <div class="task-stats">
+          <mat-chip-listbox class="task-chips">
+            <mat-chip-option 
+              *ngIf="getTaskStats(worksheet).total > 0"
+              selected 
+              disabled>
+              <mat-icon>quiz</mat-icon>
+              {{ getTaskStats(worksheet).total }} Aufgabe{{ getTaskStats(worksheet).total === 1 ? '' : 'n' }}
+            </mat-chip-option>
+            <mat-chip-option 
+              *ngIf="getTaskStats(worksheet).text > 0"
+              disabled>
+              <mat-icon>text_fields</mat-icon>
+              {{ getTaskStats(worksheet).text }} Textaufgabe{{ getTaskStats(worksheet).text === 1 ? '' : 'n' }}
+            </mat-chip-option>
+            <mat-chip-option 
+              *ngIf="getTaskStats(worksheet).knowledge > 0"
+              disabled>
+              <mat-icon>quiz</mat-icon>
+              {{ getTaskStats(worksheet).knowledge }} Wissensabfrage{{ getTaskStats(worksheet).knowledge === 1 ? '' : 'n' }}
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+
+        <!-- Keine Aufgaben -->
+        <div *ngIf="getTaskStats(worksheet).total === 0" class="no-tasks-warning">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Dieses Übungsblatt enthält noch keine Aufgaben</span>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button mat-button (click)="editWorksheet(worksheet.id)">
+          <mat-icon>edit</mat-icon>
+          Bearbeiten
+        </button>
+        <button mat-button (click)="previewWorksheet(worksheet.id)">
+          <mat-icon>preview</mat-icon>
+          Vorschau
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+  </div>
+
+  <!-- Floating Action Button für Mobile -->
+  <button mat-fab 
+          color="primary" 
+          class="fab-create" 
+          (click)="createWorksheet()"
+          matTooltip="Neues Übungsblatt erstellen">
+    <mat-icon>add</mat-icon>
+  </button>
+
+</div>
