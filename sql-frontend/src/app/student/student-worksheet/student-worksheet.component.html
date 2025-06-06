@@ -1,0 +1,265 @@
+<div class="student-worksheet" *ngIf="!isLoading">
+  
+  <!-- Header -->
+  <div class="worksheet-header">
+    <div class="header-content">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      
+      <div class="title-section">        <h1>{{ worksheet?.title }}</h1>
+        <p *ngIf="worksheet?.description">{{ worksheet?.description }}</p>
+        
+        <div class="worksheet-meta">          <mat-chip color="primary" selected>
+            <mat-icon matChipAvatar>person</mat-icon>
+            {{ worksheet?.tutor?.name }}
+          </mat-chip>
+          
+          <mat-chip color="accent" selected>
+            <mat-icon matChipAvatar>storage</mat-icon>
+            {{ worksheet?.database }}
+          </mat-chip>
+          
+          <mat-chip 
+            [color]="worksheet?.isSubmitted ? 'warn' : 'primary'" 
+            selected>
+            <mat-icon matChipAvatar>
+              {{ worksheet?.isSubmitted ? 'check_circle' : 'edit' }}
+            </mat-icon>
+            {{ worksheet?.isSubmitted ? 'Abgegeben' : 'In Bearbeitung' }}
+          </mat-chip>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progress und Status -->
+    <div class="progress-section" *ngIf="worksheet && !worksheet?.isSubmitted">
+      <div class="progress-info">
+        <span class="progress-text">
+          Fortschritt: {{ getAnswerProgress().answered }} / {{ getAnswerProgress().total }} Aufgaben
+          ({{ getAnswerProgress().percentage }}%)
+        </span>
+        
+        <span *ngIf="lastSaved" class="last-saved">
+          Zuletzt gespeichert: {{ formatLastSaved() }}
+        </span>
+      </div>
+      
+      <div class="action-buttons">
+        <button 
+          mat-stroked-button 
+          (click)="saveAnswers()" 
+          [disabled]="isSaving || !worksheetForm.dirty"
+          class="save-button">
+          <mat-icon>save</mat-icon>
+          <span *ngIf="!isSaving">Speichern</span>
+          <span *ngIf="isSaving">Speichere...</span>
+        </button>
+        
+        <button 
+          mat-raised-button 
+          color="accent"
+          (click)="submitWorksheet()" 
+          [disabled]="isSubmitting || isSaving"
+          class="submit-button">
+          <mat-icon>send</mat-icon>
+          <span *ngIf="!isSubmitting">Abgeben</span>
+          <span *ngIf="isSubmitting">Gebe ab...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Two-Panel Layout -->
+  <div class="two-panel-layout" *ngIf="worksheet">
+    
+    <!-- Left Panel - Tasks and Answers -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <h2>
+          <mat-icon>assignment</mat-icon>
+          Aufgaben
+        </h2>
+      </div>
+      
+      <div class="tasks-container">
+        <form [formGroup]="worksheetForm">
+          <div formArrayName="answers">
+            <mat-card 
+              *ngFor="let task of worksheet?.tasks; let i = index" 
+              class="task-card"
+              [class.read-only]="!worksheet.canEdit">
+              
+              <mat-card-header>
+                <div mat-card-avatar>
+                  <mat-icon [color]="getTaskColor(task.taskType)">
+                    {{ getTaskIcon(task.taskType) }}
+                  </mat-icon>
+                </div>
+                
+                <mat-card-title>
+                  Aufgabe {{ i + 1 }}: {{ task.title }}
+                </mat-card-title>
+                
+                <mat-card-subtitle>
+                  <mat-chip [color]="getTaskColor(task.taskType)" selected size="small">
+                    {{ task.taskType === 'TEXT' ? 'Textaufgabe' : 'Aufgabe' }}
+                  </mat-chip>
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="task-description">
+                  {{ task.description }}
+                </div>
+
+                <!-- Answer Input -->
+                <div [formGroupName]="i" class="answer-section">
+                  <mat-form-field appearance="outline" class="answer-field">
+                    <mat-label>Ihre Antwort</mat-label>
+                    <textarea 
+                      matInput 
+                      formControlName="answer"
+                      [readonly]="!worksheet.canEdit"
+                      rows="4"
+                      placeholder="Beschreiben Sie Ihren Lösungsansatz...">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Panel - SQL Executor -->
+    <div class="right-panel">
+      <div class="panel-header">
+        <h2>
+          <mat-icon>storage</mat-icon>
+          SQL Executor
+        </h2>
+      </div>
+      
+      <mat-card class="sql-executor-card">
+        <mat-card-content>
+          <form [formGroup]="sqlForm" (ngSubmit)="executeQuery()">
+              <!-- SQL Query Input -->
+            <div class="form-section">
+              <mat-form-field appearance="outline" class="query-input">
+                <mat-label>SQL Query</mat-label>
+                <textarea 
+                  matInput 
+                  formControlName="query"
+                  rows="8"
+                  placeholder="Geben Sie hier Ihre SQL-Abfrage ein...">
+                </textarea>
+                <mat-hint>Datenbank: {{ worksheet.database }}</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="sql-actions">
+              <button 
+                type="submit" 
+                mat-raised-button 
+                color="primary"
+                [disabled]="sqlForm.invalid || isExecutingSql">
+                <mat-icon *ngIf="!isExecutingSql">play_arrow</mat-icon>
+                <mat-spinner *ngIf="isExecutingSql" diameter="20"></mat-spinner>
+                {{ isExecutingSql ? 'Wird ausgeführt...' : 'Query ausführen' }}
+              </button>
+
+              <button 
+                type="button" 
+                mat-button 
+                (click)="clearSqlQuery()"
+                [disabled]="isExecutingSql">
+                <mat-icon>clear</mat-icon>
+                Leeren
+              </button>
+            </div>
+          </form>
+
+          <!-- Error Display -->
+          <div *ngIf="sqlError" class="error-container">
+            <mat-icon color="warn">error</mat-icon>
+            <span>{{ sqlError }}</span>
+          </div>
+
+          <!-- Results Section -->
+          <div *ngIf="sqlResult" class="results-section">
+            
+            <!-- Results Summary -->
+            <div class="results-summary">
+              <h3>
+                <mat-icon>assignment</mat-icon>
+                Abfrageergebnisse
+              </h3>
+              <div class="summary-info">
+                <span class="info-item">
+                  <strong>Zeilen:</strong> {{ sqlResult.rowCount }}
+                </span>
+                <span class="info-item" *ngIf="sqlResult.executionTime">
+                  <strong>Ausführungszeit:</strong> {{ sqlResult.executionTime }}ms
+                </span>
+              </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="table-container" *ngIf="sqlResult.rows.length > 0">
+              <table mat-table [dataSource]="sqlResult.rows" class="results-table mat-elevation-z1">
+                
+                <!-- Dynamic Columns -->
+                <ng-container 
+                  *ngFor="let column of sqlResult.columns" 
+                  [matColumnDef]="column">
+                  <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="cell-content">{{ row[column] | json }}</span>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="sqlResult.columns"></tr>
+                <tr mat-row *matRowDef="let row; columns: sqlResult.columns;"></tr>
+              </table>
+            </div>
+
+            <!-- No Results Message -->
+            <div *ngIf="sqlResult.rows.length === 0" class="no-results">
+              <mat-icon>info</mat-icon>
+              <span>Die Abfrage wurde erfolgreich ausgeführt, aber keine Daten gefunden.</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+  <!-- Read-Only Message für abgegebene Worksheets -->
+  <div *ngIf="worksheet?.isSubmitted" class="submitted-message">
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="info-content">
+          <mat-icon color="accent">check_circle</mat-icon>
+          <div>
+            <h3>Übungsblatt abgegeben</h3>
+            <p>              Sie haben dieses Übungsblatt am 
+              <strong>{{ worksheet?.submission?.submittedAt | date:'dd.MM.yyyy HH:mm' }}</strong> 
+              erfolgreich abgegeben.
+            </p>
+            <p>Ihre Antworten können nicht mehr geändert werden.</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoading" class="loading-container">
+  <mat-spinner diameter="60"></mat-spinner>
+  <p>Lade Übungsblatt...</p>
+</div>
