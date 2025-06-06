@@ -20,15 +20,94 @@ enum Role {
   ADMIN
 }
 
+/// Aufgabentypen für Übungsblätter
+enum TaskType {
+  TEXT       // Normale Textaufgabe
+}
+
+/// Status einer Abgabe
+enum SubmissionStatus {
+  DRAFT      // Entwurf, noch nicht abgegeben
+  SUBMITTED  // Abgegeben
+}
+
 /// A registered user (Student, Tutor, Admin)
 model User {
-  id             Int       @id @default(autoincrement())
-  email          String    @unique
+  id             Int          @id @default(autoincrement())
+  email          String       @unique
   passwordHash   String
   name           String
-  role           Role      @default(STUDENT)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @default(now()) @updatedAt
+  role           Role         @default(STUDENT)
+  worksheets     Worksheet[]  // Übungsblätter die der Tutor erstellt hat
+  submissions    Submission[] // Abgaben die der Student gemacht hat
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+/// Übungsblätter
+model Worksheet {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  database    String       // Name der zugeordneten Datenbank
+  tutorId     Int          // ID des Tutors, der das Übungsblatt erstellt hat
+  tutor       User         @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  submissions Submission[] // Abgaben von Studenten für dieses Übungsblatt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+
+  @@map("worksheets")
+}
+
+/// Einzelne Aufgaben innerhalb eines Übungsblatts
+model Task {
+  id          Int       @id @default(autoincrement())
+  worksheetId Int
+  worksheet   Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  taskType    TaskType  @default(TEXT)
+  orderIndex  Int       // Reihenfolge der Aufgaben
+  answers     Answer[]  // Antworten von Studenten auf diese Aufgabe
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@map("tasks")
+}
+
+/// Abgaben von Studenten für ein Übungsblatt
+model Submission {
+  id          Int              @id @default(autoincrement())
+  worksheetId Int
+  worksheet   Worksheet        @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  studentId   Int
+  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status      SubmissionStatus @default(DRAFT)
+  answers     Answer[]         // Antworten des Students auf die einzelnen Aufgaben
+  submittedAt DateTime?        // Nur gesetzt wenn status = SUBMITTED
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+
+  // Ein Student kann pro Übungsblatt nur eine Abgabe haben
+  @@unique([worksheetId, studentId])
+  @@map("submissions")
+}
+
+/// Antworten von Studenten auf einzelne Aufgaben
+model Answer {
+  id           Int        @id @default(autoincrement())
+  submissionId Int
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  taskId       Int
+  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  content      String     // Die Antwort des Students
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+
+  // Eine Antwort pro Aufgabe pro Abgabe
+  @@unique([submissionId, taskId])
+  @@map("answers")
 }
 
 model ManagedDatabase {
