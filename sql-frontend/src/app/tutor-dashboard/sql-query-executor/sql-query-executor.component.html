@@ -1,0 +1,187 @@
+<mat-card class="sql-executor-container">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>storage</mat-icon>
+      SQL Query Executor
+    </mat-card-title>
+    <mat-card-subtitle>Führe SQL-Abfragen auf verfügbaren Datenbanken aus</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <form [formGroup]="queryForm" (ngSubmit)="executeQuery()">
+      
+      <!-- Datenbank-Auswahl -->
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Datenbank auswählen</mat-label>
+          <mat-select formControlName="database" [disabled]="isLoadingDatabases">
+            <mat-option *ngFor="let db of databases" [value]="db">
+              {{ db }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="isLoadingDatabases">Lade Datenbanken...</mat-hint>
+          <mat-error *ngIf="databaseControl?.invalid && databaseControl?.touched">
+            Bitte wählen Sie eine Datenbank aus
+          </mat-error>
+        </mat-form-field>
+
+        <button 
+          type="button" 
+          mat-icon-button 
+          (click)="loadDatabases()" 
+          [disabled]="isLoadingDatabases"
+          matTooltip="Datenbankliste aktualisieren">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+
+      <!-- SQL Query Input -->
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>SQL Query</mat-label>
+          <textarea 
+            matInput 
+            formControlName="query"
+            rows="8"
+            placeholder="Geben Sie hier Ihre SQL-Abfrage ein...">
+          </textarea>
+          <mat-hint>Unterstützte Befehle: SELECT, SHOW, DESCRIBE, EXPLAIN</mat-hint>
+          <mat-error *ngIf="queryControl?.invalid && queryControl?.touched">
+            <span *ngIf="queryControl?.errors?.['required']">SQL Query ist erforderlich</span>
+            <span *ngIf="queryControl?.errors?.['minlength']">Query darf nicht leer sein</span>
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button 
+          type="submit" 
+          mat-raised-button 
+          color="primary"
+          [disabled]="queryForm.invalid || isExecuting">
+          <mat-icon *ngIf="!isExecuting">play_arrow</mat-icon>
+          <mat-spinner *ngIf="isExecuting" diameter="20"></mat-spinner>
+          {{ isExecuting ? 'Wird ausgeführt...' : 'Query ausführen' }}
+        </button>
+
+        <button 
+          type="button" 
+          mat-button 
+          (click)="setExampleQuery()"
+          [disabled]="isExecuting">
+          <mat-icon>lightbulb</mat-icon>
+          Beispiel-Query
+        </button>
+
+        <button 
+          type="button" 
+          mat-button 
+          (click)="clearQuery()"
+          [disabled]="isExecuting">
+          <mat-icon>clear</mat-icon>
+          Leeren
+        </button>
+
+        <button 
+          type="button" 
+          mat-button 
+          (click)="exportResults()"
+          *ngIf="queryResult && queryResult.rows.length > 0"
+          [disabled]="isExecuting">
+          <mat-icon>download</mat-icon>
+          Exportieren
+        </button>
+      </div>
+    </form>
+
+    <!-- Error Display -->
+    <div *ngIf="executionError" class="error-container">
+      <mat-icon color="warn">error</mat-icon>
+      <span>{{ executionError }}</span>
+    </div>
+
+    <!-- Results Section -->
+    <div *ngIf="queryResult" class="results-section">
+      
+      <!-- Results Summary -->
+      <div class="results-summary">
+        <h3>
+          <mat-icon>assignment</mat-icon>
+          Abfrageergebnisse
+        </h3>
+        <div class="summary-info">
+          <span class="info-item">
+            <strong>Zeilen:</strong> {{ queryResult.rowCount }}
+          </span>
+          <span class="info-item" *ngIf="queryResult.executionTime">
+            <strong>Ausführungszeit:</strong> {{ queryResult.executionTime }}ms
+          </span>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div class="table-container" *ngIf="queryResult.rows.length > 0">
+        <table mat-table [dataSource]="queryResult.rows" class="results-table mat-elevation-z2">
+          
+          <!-- Dynamic Columns -->
+          <ng-container 
+            *ngFor="let column of queryResult.columns" 
+            [matColumnDef]="column">
+            <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="cell-content">{{ row[column] | json }}</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="queryResult.columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: queryResult.columns;"></tr>
+        </table>
+      </div>
+
+      <!-- No Results Message -->
+      <div *ngIf="queryResult.rows.length === 0" class="no-results">
+        <mat-icon>info</mat-icon>
+        <span>Die Abfrage wurde erfolgreich ausgeführt, aber keine Daten gefunden.</span>
+      </div>
+    </div>
+
+    <!-- Query History Section -->
+    <div *ngIf="queryHistory.length > 0" class="history-section">
+      <mat-tab-group>
+        <mat-tab label="Verlauf">
+          <div class="history-content">
+            <h4>Letzte Abfragen</h4>
+            <div class="history-list">
+              <div 
+                *ngFor="let item of queryHistory" 
+                class="history-item"
+                [class.history-success]="item.success"
+                [class.history-error]="!item.success">
+                
+                <div class="history-header">
+                  <mat-icon [color]="item.success ? 'primary' : 'warn'">
+                    {{ item.success ? 'check_circle' : 'error' }}
+                  </mat-icon>
+                  <span class="history-database">{{ item.database }}</span>
+                  <span class="history-time">{{ item.timestamp | date:'HH:mm:ss' }}</span>
+                  <button 
+                    mat-icon-button 
+                    (click)="loadFromHistory(item)"
+                    matTooltip="Query laden">
+                    <mat-icon>restore</mat-icon>
+                  </button>
+                </div>
+                
+                <div class="history-query">
+                  {{ item.query.length > 100 ? (item.query | slice:0:100) + '...' : item.query }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+  </mat-card-content>
+</mat-card>
