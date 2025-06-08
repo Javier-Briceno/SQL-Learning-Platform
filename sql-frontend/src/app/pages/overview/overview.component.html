@@ -1,21 +1,14 @@
-<div class="overview-container">
-  <!-- Navigation Links - Positioniert oben links auf der Seite -->
-  <div class="navigation-links">    <!-- Link zur aktuellen Übersichtsseite (Aufgabenliste) -->
-    <a routerLink="/overview" class="nav-link">Aufgabenliste</a>
-    
-    <!-- Link zur Aufgabensuche (noch nicht funktional) -->
-    <a href="#" class="nav-link">Aufgabensuche</a>
-    
-    <!-- Link zum Student-Dashboard -->
-    <a routerLink="/student" class="nav-link" *ngIf="(isStudent$ | async) || (isAdmin$ | async)">Student-Dashboard</a>
-    
-    <!-- Link zum Tutor-Dashboard -->
-    <a routerLink="/tutor-dashboard" class="nav-link" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">Tutor-Dashboard</a>
-    
-    <!-- Link zum Admin-Dashboard -->
-    <a routerLink="/admin" class="nav-link" *ngIf="isAdmin$ | async">Admin-Dashboard</a>
-  </div>
+<mat-toolbar class="tutor-toolbar" color="primary">
+  <span style="font-weight: bold; margin-right: 24px;">SQL-Übungsplatform</span>
+  <span class="toolbar-divider"></span>
+  <a routerLink="/overview" class="nav-link mat-button">Aufgabenliste</a>
+  <a href="#" class="nav-link mat-button">Aufgabensuche</a>
+  <a routerLink="/student" class="nav-link mat-button" *ngIf="(isStudent$ | async) || (isAdmin$ | async)">Student-Dashboard</a>
+  <a routerLink="/tutor-dashboard" class="nav-link mat-button" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">Tutor-Dashboard</a>
+  <a routerLink="/admin" class="nav-link mat-button" *ngIf="isAdmin$ | async">Admin-Dashboard</a>
+</mat-toolbar>
 
+<div class="overview-container">
   <h1>Übersicht</h1>
   
   <div class="task-list-container">

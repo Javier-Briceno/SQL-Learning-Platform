@@ -1,7 +1,7 @@
 <ng-container *ngIf="currentUrl !== '/auth/login' && currentUrl !== '/auth/register'">
   <div class="profile-icon-container">
-    <button mat-icon-button [matMenuTriggerFor]="profileMenu">
-      <mat-icon>account_circle</mat-icon>
+    <button [matMenuTriggerFor]="profileMenu"  class="avatar-btn custom-avatar-btn">
+      <span class="avatar-circle">{{ userName ? userName[0] : '?' }}</span>
     </button>
     <mat-menu #profileMenu="matMenu">      <button mat-menu-item routerLink="/profile">
         <mat-icon>person</mat-icon>

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { Observable, of } from 'rxjs';
+import { MatToolbar } from '@angular/material/toolbar';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatToolbar],
   templateUrl: './overview.component.html',
   styleUrl: './overview.component.scss'
 })
