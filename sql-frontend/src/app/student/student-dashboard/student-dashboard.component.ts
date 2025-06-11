@@ -248,4 +248,8 @@ export class StudentDashboardComponent implements OnInit {
       minute: '2-digit'
     });
   }
+
+  goToOverview(): void {
+    this.router.navigate(['/overview']);
+  }
 }
