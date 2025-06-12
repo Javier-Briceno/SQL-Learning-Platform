@@ -169,13 +169,7 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   viewSubmission(submission: StudentSubmission): void {
-    if (submission.status === 'SUBMITTED') {
-      // Zeige abgegebene Submission (Read-Only)
-      this.router.navigate(['/student/submissions', submission.id, 'view']);
-    } else {
-      // Bearbeite Draft
-      this.router.navigate(['/student/worksheet', submission.worksheet.id]);
-    }
+  this.router.navigate(['/student/worksheet', submission.worksheet.id]);
   }
 
   onTabChange(index: number): void {
