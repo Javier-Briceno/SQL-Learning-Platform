@@ -206,4 +206,8 @@ export class AuthService {
         })
       );
   }
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.post<any>(`${this.apiUrl}/change-password`, { currentPassword, newPassword });
+  }
 }

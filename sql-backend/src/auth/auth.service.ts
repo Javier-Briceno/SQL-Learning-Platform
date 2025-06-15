@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
 import { Role, User } from '@prisma/client';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -175,5 +176,28 @@ export class AuthService {
       where: { id: userId },
       data: { isBanned: false },
     });
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const { currentPassword, newPassword } = dto;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Benutzer nicht gefunden');
+     
+    // Das kann noch in zukunft geändert werden
+    if (user.role === 'ADMIN') {
+      throw new ForbiddenException('Admins dürfen ihr Passwort nicht ändern.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isPasswordValid) throw new ForbiddenException('Das aktuelle Passwort ist falsch');
+
+    if (newPassword.length < 6) throw new BadRequestException('Das neue Passwort muss mindestens 6 Zeichen lang sein');
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashedPassword }
+    });
+    return { message: 'Passwort erfolgreich geändert' };
   }
 }

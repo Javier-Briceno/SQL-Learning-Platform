@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiResponse, ApiOperation} from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 
 @ApiTags('auth')
@@ -63,4 +64,11 @@ export class AuthController {
     async unbanUser(@Param('id', ParseIntPipe) userId: number) {
         return this.authService.unbanUser(userId);
     }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('change-password')
+    async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+        const userId = req.user.id;
+        return this.authService.changePassword(userId, dto);
+}
 }
