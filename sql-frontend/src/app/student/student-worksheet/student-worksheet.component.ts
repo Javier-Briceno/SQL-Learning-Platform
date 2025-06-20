@@ -70,6 +70,11 @@ interface SubmissionData {
   answers: SubmissionAnswer[];
 }
 
+interface CheckQueryResult {
+  matches: boolean;
+  aiAnswer: string;
+}
+
 @Component({
   selector: 'app-student-worksheet',
   standalone: true,
@@ -113,6 +118,10 @@ export class StudentWorksheetComponent implements OnInit {
   isExecutingSql = false;
   sqlResult: QueryResult | null = null;
   sqlError: string | null = null;
+
+  isCheckingQuery = false;
+  queryCheckResult: boolean | null = null;
+  aiCheckResult: CheckQueryResult | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -486,4 +495,36 @@ export class StudentWorksheetComponent implements OnInit {
   get sqlDisplayedColumns(): string[] {
     return this.sqlResult?.columns || [];
   }
+
+  checkQueryMatchesTask() {
+  if (!this.worksheet || !this.sqlForm.valid) return;
+  this.isCheckingQuery = true;
+  this.queryCheckResult = null;
+  const body = {
+    taskDescription: this.worksheet.tasks[0]?.description || '', // oder die passende Task-Beschreibung
+    sqlQuery: this.sqlForm.get('query')?.value
+  };
+  console.log('Request-Body an Backend:', body); // <--- HIER HINZUFÜGEN
+  this.http.post<{ matches: boolean, aiAnswer: string }>('http://localhost:3000/sql/check-query-matches-task', body)
+  .subscribe({
+    next: res => {
+      this.queryCheckResult = res.matches;
+      this.aiCheckResult = res; // <--- KI-Antwort speichern
+      this.isCheckingQuery = false;
+      this.snackBar.open(
+        res.matches ? 'Die Query passt zur Aufgabe!' : 'Die Query passt nicht zur Aufgabe.',
+        'OK',
+        { duration: 3000 }
+      );
+    },
+    error: err => {
+      this.isCheckingQuery = false;
+      this.snackBar.open('Fehler bei der Überprüfung der Query.', 'OK', { duration: 3000 });
+    }
+  });
+}
+
+  getOnlyReason(aiAnswer: string): string {
+  return aiAnswer.replace(/^(JA|NEIN)[,:]?/i, '').trim();
+}
 }

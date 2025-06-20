@@ -236,6 +236,27 @@
           </div>
         </mat-card-content>
       </mat-card>
+      <!-- KI-Check-Button unter dem SQL Executor -->
+       <button mat-stroked-button color="accent"
+        style="margin-top: 12px;"
+        (click)="checkQueryMatchesTask()"
+        [disabled]="isCheckingQuery || sqlForm.invalid || !worksheet.canEdit">
+  <mat-icon>psychology</mat-icon>
+  Query von KI prüfen
+  <mat-spinner *ngIf="isCheckingQuery" diameter="18" style="margin-left:8px;vertical-align:middle"></mat-spinner>
+</button>
+      <div *ngIf="aiCheckResult">
+  <div>
+    <strong>KI-Bewertung:</strong>
+    <span [ngClass]="{'text-success': aiCheckResult.matches, 'text-danger': !aiCheckResult.matches}">
+      {{ aiCheckResult.matches ? 'Korrekt' : 'Nicht korrekt' }}
+    </span>
+  </div>
+  <div class="ai-answer-box" style="margin-top: 8px;">
+  <strong>KI-Antwort:</strong>
+  <span>{{ getOnlyReason(aiCheckResult.aiAnswer) }}</span>
+</div>
+</div>
     </div>
   </div>
   <!-- Read-Only Message für abgegebene Worksheets -->

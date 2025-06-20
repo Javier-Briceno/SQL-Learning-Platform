@@ -2,6 +2,7 @@ import { Controller, Post, Delete, Param, UploadedFile, Get, UseInterceptors, Bo
 import { SqlService } from './sql.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
+import { CheckQueryDto } from './check-query.dto';
 
 // DTOs für Query Execution
 interface QueryExecuteDto {
@@ -43,6 +44,19 @@ export class SqlController {
   async executeQuery(@Body() queryDto: QueryExecuteDto): Promise<QueryResult> {
     return await this.sqlService.executeQuery(queryDto.query, queryDto.database);
   }
+
+  @Post('check-query-matches-task')
+  async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: boolean, aiAnswer: string }> {
+  try {
+    if (!dto.taskDescription || !dto.sqlQuery) {
+      return { matches: false, aiAnswer: 'Fehlende Eingaben.' };
+    }
+    const { matches, aiAnswer } = await this.sqlService.checkQueryMatchesTask(dto.taskDescription, dto.sqlQuery);
+    return { matches, aiAnswer };
+  } catch (error) {
+    return { matches: false, aiAnswer: 'Fehler bei der KI-Überprüfung.' };
+  }
+}
 }
 
 
