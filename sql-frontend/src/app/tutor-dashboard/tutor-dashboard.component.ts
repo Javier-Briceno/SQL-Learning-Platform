@@ -22,4 +22,7 @@ export class TutorDashboardComponent {
         this.router.navigate(['/overview']);
     }
 
+  goToDashboard() {
+    this.router.navigate(['/tutor-dashboard']);
+  }
 }
