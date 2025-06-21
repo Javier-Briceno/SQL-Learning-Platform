@@ -248,4 +248,8 @@ export class StudentDashboardComponent implements OnInit {
   goToOverview(): void {
     this.router.navigate(['/overview']);
   }
+
+  get unsubmittedWorksheets(): WorksheetOverview[] {
+  return this.availableWorksheets.filter(w => !w.isSubmitted);
+  }
 }

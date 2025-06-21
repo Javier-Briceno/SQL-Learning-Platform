@@ -31,14 +31,14 @@
         <div *ngIf="!isLoadingWorksheets" class="worksheets-grid">
           
           <!-- Kein Worksheet vorhanden -->
-          <div *ngIf="availableWorksheets.length === 0" class="empty-state">
+          <div *ngIf="unsubmittedWorksheets.length === 0" class="empty-state">
             <mat-icon>assignment</mat-icon>
             <h3>Keine Übungsblätter verfügbar</h3>
             <p>Derzeit sind keine Übungsblätter zum Bearbeiten verfügbar.</p>
           </div>
 
           <!-- Worksheet Cards -->
-          <mat-card *ngFor="let worksheet of availableWorksheets" class="worksheet-card">
+          <mat-card *ngFor="let worksheet of unsubmittedWorksheets" class="worksheet-card">
             <mat-card-header>
               <div mat-card-avatar>
                 <mat-icon [color]="getWorksheetStatusColor(worksheet)">
