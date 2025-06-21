@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatToolbar } from '@angular/material/toolbar';
 
 interface WorksheetOverview {
   id: number;
@@ -79,7 +80,8 @@ interface StudentSubmission {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTabsModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatToolbar
   ],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.scss'
