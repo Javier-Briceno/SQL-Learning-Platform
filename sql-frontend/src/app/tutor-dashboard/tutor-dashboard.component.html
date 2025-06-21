@@ -30,7 +30,37 @@
   </mat-sidenav>
   <mat-sidenav-content>
     <div class="tutor-dashboard-content">
-      <!-- --- -->
+      <ng-container *ngIf="isRootRoute()">
+       <h2 class="schnelluebersicht-headline">Schnellübersicht</h2>
+<div style="display: flex; gap: 32px; margin-bottom: 24px;">
+  <mat-card style="display: flex; flex-direction: column; align-items: center; min-width: 330px;">
+    <mat-card-title style="width: 100%; text-align: center;">
+      Anzahl aktiver Studenten heute
+    </mat-card-title>
+    <mat-card-content>
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <mat-icon style="font-size: 1.2rem; color: #43a047; margin-right: 8px;">fiber_manual_record</mat-icon>
+        <span style="font-size: 2rem; font-weight: bold; color: #43a047;">
+          {{ onlineStudentsCount !== null ? onlineStudentsCount : '...' }}
+        </span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card style="display: flex; flex-direction: column; align-items: center; min-width: 330px;">
+    <mat-card-title style="width: 100%; text-align: center;">
+      Eingereichte Abgaben heute
+    </mat-card-title>
+    <mat-card-content>
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <mat-icon style="font-size: 1.2rem; color: #1976d2; margin-right: 8px;">assignment_turned_in</mat-icon>
+        <span style="font-size: 2rem; font-weight: bold; color: #1976d2;">
+          {{ todaysSubmissionsCount !== null ? todaysSubmissionsCount : '...' }}
+        </span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+</ng-container>
       <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>

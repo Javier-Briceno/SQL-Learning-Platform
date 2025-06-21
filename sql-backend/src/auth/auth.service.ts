@@ -100,6 +100,11 @@ export class AuthService {
       throw new ForbiddenException('Ihr Konto wurde gesperrt. Bitte wenden Sie sich an den Support.');
     }
 
+    await this.prisma.user.update({
+    where: { id: user.id },
+    data: { lastActiveAt: new Date() }
+    });
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -200,4 +205,39 @@ export class AuthService {
     });
     return { message: 'Passwort erfolgreich geändert' };
   }
+
+  async getOnlineStudents() {
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const tomorrowUtc = new Date(todayUtc);
+  tomorrowUtc.setUTCDate(todayUtc.getUTCDate() + 1);
+
+  return this.prisma.user.count({
+    where: {
+      role: 'STUDENT',
+      lastActiveAt: {
+        gte: todayUtc,
+        lt: tomorrowUtc
+      },
+      isBanned: false,
+    },
+  });
+}
+
+  async getTodaysSubmittedSubmissions() {
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const tomorrowUtc = new Date(todayUtc);
+  tomorrowUtc.setUTCDate(todayUtc.getUTCDate() + 1);
+
+  return this.prisma.submission.count({
+    where: {
+      status: 'SUBMITTED',
+      submittedAt: {
+        gte: todayUtc,
+        lt: tomorrowUtc
+      }
+    }
+  });
+}
 }

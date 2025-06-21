@@ -70,5 +70,17 @@ export class AuthController {
     async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
         const userId = req.user.id;
         return this.authService.changePassword(userId, dto);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('students/online')
+    async getOnlineStudents() {
+        return { online: await this.authService.getOnlineStudents() };
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('submissions/today')
+    async getTodaysSubmissions() {
+        return { count: await this.authService.getTodaysSubmittedSubmissions() };
 }
 }

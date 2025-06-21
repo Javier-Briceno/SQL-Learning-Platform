@@ -42,7 +42,8 @@ model User {
   submissions    Submission[] // Abgaben die der Student gemacht hat
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @default(now()) @updatedAt
-  isBanned       Boolean      @default(false) 
+  isBanned       Boolean      @default(false)
+  lastActiveAt   DateTime?
 }
 
 /// Übungsblätter
