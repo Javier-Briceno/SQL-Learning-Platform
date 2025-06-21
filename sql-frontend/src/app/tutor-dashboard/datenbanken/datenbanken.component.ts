@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { MatDialog } from '@angular/material/dialog';
+import { DatabaseContentDialogComponent } from './database-content-dialog.component';
 
 @Component({
   selector: 'app-datenbanken',
@@ -15,8 +17,10 @@ export class DatenbankenComponent {
   isLoading: boolean = false;
   errorMsg: string | null = null;
   private baseUrl = 'http://localhost:3000/sql';
+  selectedDbContent: any = null;
+  selectedDbName: string | null = null;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private dialog: MatDialog) { }
 
   ngOnInit(): void {
     this.loadDatabases();
@@ -61,5 +65,29 @@ export class DatenbankenComponent {
           }
         });
     }
+  }
+
+  onShowDatabase(dbName: string): void {
+  this.isLoading = true;
+  this.http.get<any[]>(`${this.baseUrl}/inspect/${dbName}`)
+    .subscribe({
+      next: (tables) => {
+        this.isLoading = false;
+        this.dialog.open(DatabaseContentDialogComponent, {
+          width: '80vw',
+          maxHeight: '80vh',
+          data: { dbName, content: tables }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.errorMsg = err.error?.message || err.message || 'Fehler beim Laden des Datenbankinhalts.';
+        this.isLoading = false;
+      }
+    });
+}
+
+  closeDbContent(): void {
+  this.selectedDbContent = null;
+  this.selectedDbName = null;
   }
 }

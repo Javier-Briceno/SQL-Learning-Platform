@@ -361,4 +361,39 @@ export class SqlService {
         throw new InternalServerErrorException('KI-Überprüfung fehlgeschlagen.');
     }
 }
+
+    async inspectDatabase(dbName: string): Promise<any[]> {
+    const client = await this.getDatabaseClient(dbName);
+    try {
+    // Alle Tabellennamen holen
+    const tablesRes = await client.query(`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+    const tables = tablesRes.rows.map(r => r.table_name);
+
+    const result: any[] = [];
+    for (const table of tables) {
+      // Spaltennamen holen
+      const columnsRes = await client.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = $1
+        ORDER BY ordinal_position
+      `, [table]);
+      const columns = columnsRes.rows.map(r => r.column_name);
+
+      // Alle Zeilen holen (maximal 100)
+      const rowsRes = await client.query(`SELECT * FROM "${table}" LIMIT 100`);
+      result.push({
+        name: table,
+        columns,
+        rows: rowsRes.rows
+      });
+    }
+    return result;
+  } finally {
+    await client.end();
+  }
+}
 }

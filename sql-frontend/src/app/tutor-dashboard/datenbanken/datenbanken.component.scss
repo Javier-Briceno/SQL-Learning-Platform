@@ -63,6 +63,28 @@
       margin-right: 15px;
     }
 
+    .show-db-button {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease;
+      margin-right: 8px;
+      flex-shrink: 0;
+
+      &:hover:not(:disabled) {
+        background-color: #1251a3;
+      }
+
+      &:disabled {
+        background-color: #bbdefb;
+        cursor: not-allowed;
+      }
+    }
+
     .delete-db-button {
       background-color: #dc3545;
       color: white;
@@ -91,4 +113,41 @@
   color: #666;
   font-style: italic;
   padding: 15px;
+}
+
+mat-dialog-content {
+  max-height: 60vh;
+  overflow: auto;
+}
+.table-scroll-x {
+  overflow-x: auto;
+}
+table {
+  min-width: 600px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.close-db-content-btn {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  margin-right: 8px;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: #1251a3;
+  }
+
+  &:disabled {
+    background-color: #bbdefb;
+    cursor: not-allowed;
+  }
 }

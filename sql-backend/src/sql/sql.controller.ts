@@ -57,6 +57,11 @@ export class SqlController {
     return { matches: false, aiAnswer: 'Fehler bei der KI-Überprüfung.' };
   }
 }
+
+  @Get('inspect/:dbName')
+  async inspectDatabase(@Param('dbName') dbName: string) {
+  return this.sqlService.inspectDatabase(dbName);
+}
 }
 
 
