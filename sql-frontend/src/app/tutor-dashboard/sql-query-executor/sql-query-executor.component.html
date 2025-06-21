@@ -40,11 +40,12 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>SQL Query</mat-label>
           <textarea 
-            matInput 
-            formControlName="query"
-            rows="8"
-            placeholder="Geben Sie hier Ihre SQL-Abfrage ein...">
-          </textarea>
+    matInput 
+    formControlName="query"
+    rows="8"
+    placeholder="Geben Sie hier Ihre SQL-Abfrage ein..."
+    style="max-height: 180px; min-height: 80px; overflow-y: auto; font-family: monospace; white-space: pre; resize: vertical;">
+  </textarea>
           <mat-hint>Unterstützte Befehle: SELECT, SHOW, DESCRIBE, EXPLAIN</mat-hint>
           <mat-error *ngIf="queryControl?.invalid && queryControl?.touched">
             <span *ngIf="queryControl?.errors?.['required']">SQL Query ist erforderlich</span>
@@ -122,6 +123,7 @@
 
       <!-- Results Table -->
       <div class="table-container" *ngIf="queryResult.rows.length > 0">
+         <div style="overflow-x: auto; max-width: 100%;">
         <table mat-table [dataSource]="queryResult.rows" class="results-table mat-elevation-z2">
           
           <!-- Dynamic Columns -->
@@ -138,6 +140,7 @@
           <tr mat-row *matRowDef="let row; columns: queryResult.columns;"></tr>
         </table>
       </div>
+    </div>
 
       <!-- No Results Message -->
       <div *ngIf="queryResult.rows.length === 0" class="no-results">

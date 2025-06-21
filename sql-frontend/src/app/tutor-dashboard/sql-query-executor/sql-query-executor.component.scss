@@ -1,7 +1,31 @@
 .sql-executor-container {
-  margin: 20px;
-  max-width: 1400px;
-  font-family: 'Roboto', sans-serif;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+
+  
+  .query-input textarea {
+  max-height: 180px;
+  min-height: 80px;
+  overflow-y: auto;
+  font-family: monospace;
+  white-space: pre;
+  resize: vertical;
+}
+
+.table-container.scroll-x {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.results-table {
+  min-width: 600px;
+  width: max-content;
+  table-layout: auto;
+}
 
   mat-card-header {
     margin-bottom: 20px;
