@@ -137,18 +137,19 @@
 
 // Panel Headers
 .panel-header {
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e0e0e0;
-  
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .task-select-right {
+    margin-left: auto;
+    min-width: 220px;
+  }
+
   h2 {
     margin: 0;
-    color: #333;
-    font-size: 1.5rem;
-    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 8px;
     
     mat-icon {
       color: #1976d2;
@@ -608,6 +609,13 @@
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
+
+    .centered-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0 0 0;
+}
   }
 
   .sql-executor-card {

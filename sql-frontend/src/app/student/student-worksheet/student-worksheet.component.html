@@ -77,12 +77,22 @@
     
     <!-- Left Panel - Tasks and Answers -->
     <div class="left-panel">
-      <div class="panel-header">
-        <h2>
-          <mat-icon>assignment</mat-icon>
-          Aufgaben
-        </h2>
-      </div>
+      <div class="panel-header" style="display: flex; align-items: center; gap: 16px;">
+  <h2 style="margin: 0; display: flex; align-items: center;">
+    <mat-icon>assignment</mat-icon>
+    Aufgaben
+  </h2>
+  <ng-container *ngIf="worksheet && worksheet.tasks && worksheet.tasks.length > 1">
+    <mat-form-field appearance="outline" class="task-select-right">
+  <mat-label>Aufgabe für KI-Check</mat-label>
+  <mat-select [(ngModel)]="selectedTaskIndex" name="selectedTaskIndex">
+    <mat-option *ngFor="let task of worksheet.tasks; let i = index" [value]="i">
+      Aufgabe {{ i + 1 }}: {{ task.title }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+  </ng-container>
+</div>
       
       <div class="tasks-container">
         <form [formGroup]="worksheetForm">
@@ -240,6 +250,7 @@
         </mat-card-content>
       </mat-card>
       <!-- KI-Check-Button unter dem SQL Executor -->
+       <div class="centered-btn">
        <button mat-stroked-button color="accent"
         style="margin-top: 12px;"
         (click)="checkQueryMatchesTask()"
@@ -248,6 +259,7 @@
   Query von KI prüfen
   <mat-spinner *ngIf="isCheckingQuery" diameter="18" style="margin-left:8px;vertical-align:middle"></mat-spinner>
 </button>
+</div>
       <div *ngIf="aiCheckResult">
   <div>
     <strong>KI-Bewertung:</strong>
