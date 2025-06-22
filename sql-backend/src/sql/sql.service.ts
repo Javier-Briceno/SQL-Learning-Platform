@@ -96,80 +96,97 @@ export class SqlService {
     }
 
     // Neue Methode für Query Execution
-    async executeQuery(query: string, databaseName: string, ownerId: number): Promise<QueryResult> {
-        // Input Validierung
-        if (!query || query.trim().length === 0) {
-            throw new BadRequestException('SQL Query darf nicht leer sein.');
-        }
+    async executeQuery(query: string, databaseName: string, userId: number): Promise<QueryResult> {
+    // Input Validierung
+    if (!query || query.trim().length === 0) {
+        throw new BadRequestException('SQL Query darf nicht leer sein.');
+    }
 
-        if (!databaseName || databaseName.trim().length === 0) {
-            throw new BadRequestException('Datenbankname darf nicht leer sein.');
-        }
+    if (!databaseName || databaseName.trim().length === 0) {
+        throw new BadRequestException('Datenbankname darf nicht leer sein.');
+    }
 
-        // Prüfe ob Datenbank in verwalteten Datenbanken existiert
-        const managedDbs = await this.listDatabases(ownerId);
-        if (!managedDbs.includes(databaseName)) {
-            throw new NotFoundException(`Datenbank '${databaseName}' wurde nicht gefunden oder ist nicht verfügbar.`);
-        }
+    // Zugriffsprüfung: Owner ODER in einem Worksheet verwendet
+    const managedDb = await this.prisma.managedDatabase.findUnique({
+        where: { dbName: databaseName }
+    });
 
-        // SQL Query validieren
-        this.validateQuery(query);
-
-        let client: Client | null = null;
-        const startTime = Date.now();
-
-        try {
-            // Verbindung zur Zieldatenbank herstellen
-            client = await this.getDatabaseClient(databaseName);            // Query mit Timeout ausführen (10 Sekunden)
-            const result = await Promise.race([
-                client.query(query),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Query Timeout')), 10000)
-                )
-            ]) as any;
-
-            const executionTime = Date.now() - startTime;
-
-            // Ergebnis formatieren
-            const queryResult: QueryResult = {
-                columns: result.fields ? result.fields.map((field: any) => field.name) : [],
-                rows: result.rows || [],
-                rowCount: result.rowCount || 0,
-                executionTime
-            };
-
-            console.log(`Query ausgeführt in ${executionTime}ms auf Datenbank ${databaseName}`);
-            return queryResult;
-
-        } catch (error) {
-            const executionTime = Date.now() - startTime;
-            console.error(`Query-Fehler nach ${executionTime}ms:`, error);
-
-            if (error.message === 'Query Timeout') {
-                throw new BadRequestException('Query-Timeout: Die Abfrage dauerte zu lange (max. 10 Sekunden).');
-            }
-
-            if (error.code) {
-                // PostgreSQL-spezifische Fehler
-                switch (error.code) {
-                    case '42P01':
-                        throw new BadRequestException(`Tabelle oder Relation existiert nicht: ${error.message}`);
-                    case '42703':
-                        throw new BadRequestException(`Spalte existiert nicht: ${error.message}`);
-                    case '42601':
-                        throw new BadRequestException(`SQL-Syntax-Fehler: ${error.message}`);
-                    default:
-                        throw new BadRequestException(`Datenbankfehler: ${error.message}`);
-                }
-            }
-
-            throw new InternalServerErrorException(`Unerwarteter Fehler bei der Query-Ausführung: ${error.message}`);
-        } finally {
-            if (client) {
-                await client.end();
-            }
+    let hasAccess = false;
+    if (managedDb && managedDb.ownerId === userId) {
+        hasAccess = true;
+    } else {
+        // Prüfen, ob die Datenbank in einem Worksheet verwendet wird
+        const worksheet = await this.prisma.worksheet.findFirst({
+            where: { database: databaseName }
+        });
+        if (worksheet) {
+            hasAccess = true;
         }
     }
+
+    if (!hasAccess) {
+        throw new NotFoundException(`Datenbank '${databaseName}' wurde nicht gefunden oder ist nicht verfügbar.`);
+    }
+
+    // SQL Query validieren
+    this.validateQuery(query);
+
+    let client: Client | null = null;
+    const startTime = Date.now();
+
+    try {
+        // Verbindung zur Zieldatenbank herstellen
+        client = await this.getDatabaseClient(databaseName);
+        // Query mit Timeout ausführen (10 Sekunden)
+        const result = await Promise.race([
+            client.query(query),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Query Timeout')), 10000)
+            )
+        ]) as any;
+
+        const executionTime = Date.now() - startTime;
+
+        // Ergebnis formatieren
+        const queryResult: QueryResult = {
+            columns: result.fields ? result.fields.map((field: any) => field.name) : [],
+            rows: result.rows || [],
+            rowCount: result.rowCount || 0,
+            executionTime
+        };
+
+        console.log(`Query ausgeführt in ${executionTime}ms auf Datenbank ${databaseName}`);
+        return queryResult;
+
+    } catch (error) {
+        const executionTime = Date.now() - startTime;
+        console.error(`Query-Fehler nach ${executionTime}ms:`, error);
+
+        if (error.message === 'Query Timeout') {
+            throw new BadRequestException('Query-Timeout: Die Abfrage dauerte zu lange (max. 10 Sekunden).');
+        }
+
+        if (error.code) {
+            // PostgreSQL-spezifische Fehler
+            switch (error.code) {
+                case '42P01':
+                    throw new BadRequestException(`Tabelle oder Relation existiert nicht: ${error.message}`);
+                case '42703':
+                    throw new BadRequestException(`Spalte existiert nicht: ${error.message}`);
+                case '42601':
+                    throw new BadRequestException(`SQL-Syntax-Fehler: ${error.message}`);
+                default:
+                    throw new BadRequestException(`Datenbankfehler: ${error.message}`);
+            }
+        }
+
+        throw new InternalServerErrorException(`Unerwarteter Fehler bei der Query-Ausführung: ${error.message}`);
+    } finally {
+        if (client) {
+            await client.end();
+        }
+    }
+}
 
     async executeSqlFile(sqlText: string, ownerId: number) {
 
