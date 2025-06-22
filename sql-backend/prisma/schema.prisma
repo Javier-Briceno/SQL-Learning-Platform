@@ -44,6 +44,8 @@ model User {
   updatedAt      DateTime     @default(now()) @updatedAt
   isBanned       Boolean      @default(false)
   lastActiveAt   DateTime?
+
+  managedDatabases ManagedDatabase[] 
 }
 
 /// Übungsblätter
@@ -115,5 +117,7 @@ model Answer {
 model ManagedDatabase {
   id        Int      @id @default(autoincrement())
   dbName    String   @unique 
+  ownerId   Int?      // Besitzer der Datenbank (Tutor)
+  owner     User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

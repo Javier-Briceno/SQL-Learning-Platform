@@ -96,7 +96,7 @@ export class SqlService {
     }
 
     // Neue Methode für Query Execution
-    async executeQuery(query: string, databaseName: string): Promise<QueryResult> {
+    async executeQuery(query: string, databaseName: string, ownerId: number): Promise<QueryResult> {
         // Input Validierung
         if (!query || query.trim().length === 0) {
             throw new BadRequestException('SQL Query darf nicht leer sein.');
@@ -107,7 +107,7 @@ export class SqlService {
         }
 
         // Prüfe ob Datenbank in verwalteten Datenbanken existiert
-        const managedDbs = await this.listDatabases();
+        const managedDbs = await this.listDatabases(ownerId);
         if (!managedDbs.includes(databaseName)) {
             throw new NotFoundException(`Datenbank '${databaseName}' wurde nicht gefunden oder ist nicht verfügbar.`);
         }
@@ -171,7 +171,7 @@ export class SqlService {
         }
     }
 
-    async executeSqlFile(sqlText: string) {
+    async executeSqlFile(sqlText: string, ownerId: number) {
 
         // Die SQL-Statements in der Datei trennen
         const statements = sqlText
@@ -235,6 +235,7 @@ export class SqlService {
             await this.prisma.managedDatabase.create({
                 data: {
                     dbName: newDbName,
+                    ownerId: ownerId,
                 },
             });
         } catch (prismaError) {
@@ -245,20 +246,12 @@ export class SqlService {
     }
 
 
-    async listDatabases(): Promise<string[]> {
-        try {
-            const managedDbs = await this.prisma.managedDatabase.findMany({
-                select: {
-                    dbName: true,
-                },
-            });
-
-            return managedDbs.map(db => db.dbName);
-
-        } catch (error) {
-            console.error('Fehler beim Auflisten der verwalteten Datenbanken via Prisma:', error);
-            throw new InternalServerErrorException('Liste der verwalteten Datenbanken konnte nicht abgerufen werden.');
-        }
+    async listDatabases(ownerId: number): Promise<string[]> {
+        const dbs = await this.prisma.managedDatabase.findMany({
+        where: { ownerId },
+        select: { dbName: true }
+        });
+        return dbs.map(db => db.dbName);
     }
 
      async deleteDatabase(dbName: string): Promise<void> {
