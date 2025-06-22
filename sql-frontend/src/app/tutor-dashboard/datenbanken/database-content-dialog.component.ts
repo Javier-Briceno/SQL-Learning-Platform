@@ -62,7 +62,7 @@ import { CommonModule } from '@angular/common';
 
 export class DatabaseContentDialogComponent {
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: { dbName: string, content: any[] },
-    public dialogRef: MatDialogRef<DatabaseContentDialogComponent>
+    public dialogRef: MatDialogRef<DatabaseContentDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 }

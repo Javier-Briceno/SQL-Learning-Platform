@@ -147,12 +147,16 @@
 
     <!-- Right Panel - SQL Executor -->
     <div class="right-panel">
-      <div class="panel-header">
-        <h2>
-          <mat-icon>storage</mat-icon>
-          SQL Executor
-        </h2>
-      </div>
+  <div class="panel-header">
+    <h2>
+      <mat-icon>storage</mat-icon>
+      SQL Executor
+    </h2>
+    <button mat-stroked-button color="primary" (click)="showDatabaseContent()">
+  <mat-icon>table_view</mat-icon>
+  Datenbank anzeigen
+</button>
+  </div>
       
       <mat-card class="sql-executor-card">
         <mat-card-content>

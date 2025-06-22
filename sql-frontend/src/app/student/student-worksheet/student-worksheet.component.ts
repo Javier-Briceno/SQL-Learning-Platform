@@ -17,6 +17,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
 import { ConfirmSubmitDialogComponent } from './confirm-submit-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
+import { DatabaseContentDialogComponent } from '../../tutor-dashboard/datenbanken/database-content-dialog.component';
 
 interface Task {
   id: number;
@@ -530,5 +531,30 @@ export class StudentWorksheetComponent implements OnInit {
 
   getOnlyReason(aiAnswer: string): string {
   return aiAnswer.replace(/^(JA|NEIN)[,:]?/i, '').trim();
+}
+
+  openDatabaseDialog() {
+    this.dialog.open(DatabaseContentDialogComponent, {
+      data: { dbName: this.worksheet?.database }
+    });
+  }
+
+  showDatabaseContent() {
+  if (!this.worksheet) return;
+  const dbName = this.worksheet.database;
+  this.http.get<any>(`http://localhost:3000/sql/inspect/${dbName}`).subscribe({
+    next: (content) => {
+      this.dialog.open(DatabaseContentDialogComponent, {
+        data: {
+          dbName,
+          content
+        },
+        width: '800px'
+      });
+    },
+    error: (err) => {
+      this.snackBar.open('Fehler beim Laden der Datenbankstruktur', 'OK', { duration: 3000 });
+    }
+  });
 }
 }
