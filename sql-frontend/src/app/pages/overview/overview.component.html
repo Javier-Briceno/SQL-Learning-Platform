@@ -1,8 +1,6 @@
 <mat-toolbar class="tutor-toolbar" color="primary">
   <span style="font-weight: bold; margin-right: 24px;">SQL-Übungsplatform</span>
   <span class="toolbar-divider"></span>
-  <a routerLink="/overview" class="nav-link mat-button">Aufgabenliste</a>
-  <a href="#" class="nav-link mat-button">Aufgabensuche</a>
   <a routerLink="/student" class="nav-link mat-button" *ngIf="(isStudent$ | async) || (isAdmin$ | async)">Student-Dashboard</a>
   <a routerLink="/tutor-dashboard" class="nav-link mat-button" *ngIf="(isTutor$ | async) || (isAdmin$ | async)">Tutor-Dashboard</a>
   <a routerLink="/admin" class="nav-link mat-button" *ngIf="isAdmin$ | async">Admin-Dashboard</a>
@@ -10,6 +8,34 @@
 
 <div class="overview-container">
   <h1>Übersicht</h1>
+  <div class="overview-blue-bar"></div>
+
+  <div *ngIf="isStudent$ | async as isStudent">
+  <div class="progress-container" *ngIf="isStudent" style="display: flex; align-items: center;">
+    <div>
+      <p>Du hast {{ progressPercent }}% der Übungen abgeschlossen</p>
+      <div class="custom-progress-bar-outer">
+        <div class="custom-progress-bar-inner" [style.width.%]="progressPercent"></div>
+      </div>
+    </div>
+    <mat-card class="worksheet-stats-card">
+      <div class="stats-header">
+        <span>Dein Fortschritt</span>
+      </div>
+      <div class="stats-content">
+        <div class="stat-block">
+          <span class="stat-label">Bearbeitet</span>
+          <span class="stat-value">{{ submittedWorksheets }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-block">
+          <span class="stat-label">Zu bearbeiten</span>
+          <span class="stat-value">{{ totalWorksheets - submittedWorksheets }}</span>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+</div>
   
   <div class="task-list-container">
     <h2>Aufgabenliste</h2>
