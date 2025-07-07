@@ -229,9 +229,54 @@
             <mat-icon color="warn">error</mat-icon>
             <span>{{ errorMessage }}</span>
           </div>
+          
+
+          <!-- KI-Aufgaben-Generator -->
+          <div class="ai-task-generator">
+            <mat-form-field appearance="outline">
+              <mat-label>Thema</mat-label>
+              <input
+                matInput
+                [value]="aiTopic"
+                (input)="aiTopic = $any($event.target).value"
+                placeholder="z.B. Join-Operator"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Schwierigkeit</mat-label>
+              <mat-select
+                [value]="aiDifficulty"
+                (selectionChange)="aiDifficulty = $event.value"
+                placeholder="— bitte wählen —"
+              >
+                <mat-option value="leicht">leicht</mat-option>
+                <mat-option value="mittel">mittel</mat-option>
+                <mat-option value="schwer">schwer</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateTask()"
+              [disabled]="isGenerating || !aiTopic || !aiDifficulty || !databaseControl?.value"
+            >
+              {{ isGenerating ? 'Generiere...' : 'Aufgaben per KI generieren' }}
+            </button>
+          </div>
+          <!-- Ausgabe der KI-Antwort -->
+          <div *ngIf="generatedTaskDescription" class="ai-tasks-output" style="margin-top: 1em;">
+            <h3>💡 Generierte Aufgabe:</h3>
+            <p>{{ generatedTaskDescription }}</p>
+
+            <h3>🖥 Beispiel-SQL-Query:</h3>
+            <pre><code>{{ generatedSqlQuery }}</code></pre>
+          </div>
 
           <!-- Aktions-Buttons -->
-          <div class="form-actions">            <button type="button" mat-button (click)="goToOverview()">
+          <div class="form-actions">            
+            <button type="button" mat-button (click)="goToOverview()">
               <mat-icon>arrow_back</mat-icon>
               Zur Übersicht
             </button>

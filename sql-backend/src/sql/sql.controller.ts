@@ -3,6 +3,7 @@ import { SqlService } from './sql.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
 import { CheckQueryDto } from './check-query.dto';
+import { GenerateTaskDto } from './generate-task.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 // DTOs für Query Execution
@@ -67,6 +68,24 @@ export class SqlController {
   async inspectDatabase(@Param('dbName') dbName: string) {
   return this.sqlService.inspectDatabase(dbName);
 }
+
+  // Route zum Generieren von Aufgaben per KI
+  @Post('generate-task')
+  async generateTask(@Body() dto: GenerateTaskDto): Promise<{ task: string, aiAnswer: string }> {
+    // Überprüfen, ob die Eingaben vorhanden sind
+    try {
+      if (!dto.topic || !dto.difficulty || !dto.database) {
+        return { task: '', aiAnswer: 'Fehlende Eingaben.' };
+      }
+      // Aufruf der Service-Methode zur Generierung der Aufgabe
+      const { taskDescription, sqlQuery } = await this.sqlService.generateTask(dto.topic, dto.difficulty, dto.database);
+      // Rückgabe der generierten Aufgabe und der SQL-Abfrage
+      return { task: taskDescription, aiAnswer: sqlQuery };
+    } catch (error) {
+      // Fehlerbehandlung
+      return { task: '', aiAnswer: 'Fehler bei der KI-Aufgabenerstellung.' };
+    }
+  }
 }
 
 

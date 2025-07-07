@@ -89,6 +89,15 @@ export class WorksheetCreatorComponent implements OnInit {
   // Enums für Template
   TaskType = TaskType;
 
+  // KI Generierung
+  aiTopic = '';
+  aiDifficulty = '';
+  isGenerating = false;
+  generatedTasks: string[] = [];
+
+  generatedTaskDescription = '';  // Für den reinen Aufgabentext
+  generatedSqlQuery = '';         // Für die Beispiel-SQL
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -421,5 +430,45 @@ export class WorksheetCreatorComponent implements OnInit {
     if (this.worksheetId) {
       this.router.navigate(['/tutor-dashboard/worksheets/edit', this.worksheetId]);
     }
+  }
+  // KI Generierung starten
+  generateTask(): void {
+    // Logge die Eingaben für Debugging
+    console.log('⭐ generateTask ausgelöst mit:', {
+      topic: this.aiTopic,
+      difficulty: this.aiDifficulty,
+      database: this.databaseControl?.value
+    });
+
+    const topic = this.aiTopic.trim();
+    const difficulty = this.aiDifficulty.trim();
+    const database = this.databaseControl?.value;
+
+    if (!topic || !difficulty || !database) {
+      return;
+    }
+
+    this.isGenerating = true;
+    this.generatedTasks = [];
+
+    this.http
+      .post<{ task: string; aiAnswer: string }>('http://localhost:3000/sql/generate-task', { topic, difficulty, database })
+      .subscribe({
+        next: (res) => {
+          // Ganze Rohbeschreibung
+          const raw = res.task.trim();
+          // SQL-Block entfernen (```sql … ``` inklusive Backticks)
+          const cleanedDescription = raw.replace(/```sql[\s\S]*?```/i, '').trim();
+
+          // Komponente beschicken
+          this.generatedTaskDescription = cleanedDescription;
+          this.generatedSqlQuery       = res.aiAnswer.trim();
+          this.isGenerating             = false;
+        },
+        error: (err) => {
+          console.error('KI-Generierung fehlgeschlagen', err);
+          this.isGenerating = false;
+        },
+      });
   }
 }

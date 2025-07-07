@@ -406,4 +406,72 @@ export class SqlService {
     await client.end();
   }
 }
+    // Extrahiert die SQL-Query aus der generierten Aufgabenbeschreibung
+    private extractSqlQuery(taskDescription: string): string {
+        const sqlRegex = /```sql\n([\s\S]*?)\n```/;
+        const match = taskDescription.match(sqlRegex);
+        return match ? match[1].trim() : '';
+    }
+    
+    // Generiert eine SQL-Aufgabe basierend auf dem Thema und Schwierigkeitsgrad
+    async generateTask(topic: string, difficulty: string, database: string): Promise<{ taskDescription: string, sqlQuery: string }> {
+        
+        // 1) Schema auslesen (Tabellen & Spalten)
+        const schemaInfo = await this.inspectDatabase(database);
+
+        // 2) In eine Prompt-kompatible Form bringen
+        const schemaDesc = schemaInfo
+            .map(tbl => `${tbl.name}(${tbl.columns.join(', ')})`)
+            .join('\n');
+
+        // 3) Prompt bauen
+        const prompt = `
+        Schema der Datenbank "${database}":
+        ${schemaDesc}
+
+        Thema: ${topic}
+        Schwierigkeitsgrad: ${difficulty}
+
+        Erstelle eine SQL-Übungsaufgabe.  
+        **WICHTIG:** Gib **nur** die reine Aufgaben­beschreibung zurück, **ohne** ein vorangestelltes "**Aufgabe:**" oder andere Überschriften.  
+        Die SQL-Abfrage packst du bitte in einen \`\`\`sql …\`\`\`-Block.
+        `.trim();
+
+        // 4) Request an OpenAI
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            throw new InternalServerErrorException('OPENAI_API_KEY nicht gesetzt.');
+        }
+        
+        // try-catch Block für die API-Anfrage
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4.1',
+                    messages: [
+                        { role: 'system', content: 'Du bist ein hilfreicher SQL-Lehrer.' },
+                        { role: 'user', content: prompt }
+                    ],
+                    max_tokens: 500,
+                    temperature: 0
+                })
+            });
+            // Überprüfen, ob die Antwort erfolgreich war
+            if (!response.ok) throw new InternalServerErrorException(`OpenAI-Fehler: ${response.statusText}`);
+            // Antwort verarbeiten
+            const data = await response.json();
+            const taskDescription = data.choices[0].message.content.trim();
+            // SQL-Query aus der Antwort extrahieren
+            const sqlQuery = this.extractSqlQuery(taskDescription);
+            return { taskDescription, sqlQuery };
+        } catch (error) {
+            throw new InternalServerErrorException('KI-Aufgabenerstellung fehlgeschlagen.');
+        }
+}
+
 }

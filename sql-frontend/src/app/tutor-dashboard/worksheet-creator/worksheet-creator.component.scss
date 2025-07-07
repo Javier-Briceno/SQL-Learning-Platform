@@ -534,3 +534,97 @@ mat-form-field {
 .task-card .task-preview.knowledge-task {
   border-left-color: #9c27b0;
 }
+
+/* --- Container für das Topic/Difficulty-Formular und Button --- */
+.ai-task-generator {
+  display: grid;
+  grid-template-columns: 1fr;   // eine Spalte: Label+Input und Button
+  grid-template-rows: auto auto auto;     // drei Zeilen: Thema-Zeile, Difficulty-Zeile und Button-Zeile
+  row-gap: 0.5rem; // Abstand zwischen den Elementen
+  align-items: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid #ccc;   // passe die Variable an dein Theme an
+  border-radius: 0.25rem;
+  background-color: #f9f9f9; // z.B. weiß oder hellgrau
+
+  // Alle mat-form-field im ai-task-generator auf volle Breite
+  > mat-form-field {
+    width: 100%;
+  }
+
+  // Erstes mat-form-field (Thema)
+  > mat-form-field:nth-of-type(1) {
+    grid-row: 1;
+  }
+
+  // Zweites mat-form-field (Schwierigkeit)
+  > mat-form-field:nth-of-type(2) {
+    grid-row: 2;
+  }
+
+  button {
+    grid-row: 3;
+    margin-top: 0;
+    padding: 0.5rem 1rem;
+    margin-left: auto;
+    background-color: #3f51b5;
+    color: #fff;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:disabled {
+      background-color: #9fa8da;
+      cursor: not-allowed;
+    }
+    &:hover:not(:disabled) {
+      background-color: #303f9f;
+    }
+  }
+}
+
+/* --- Ausgabe der KI-Antwort --- */
+.ai-tasks-output {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-left: 4px solid #ff4081;
+  background-color: #fafafa;
+  border-radius: 0.25rem;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+
+    /* Emoji-Icon etwas größer darstellen */
+    &:before {
+      content: '';
+      display: inline-block;
+      width: 1.2em;
+      height: 1.2em;
+      margin-right: 0.5em;
+      /* hier könntest du auch ein SVG-Hintergrundbild verwenden */
+    }
+  }
+
+  p {
+    margin: 0.5rem 0 1rem;
+    white-space: pre-wrap; /* Zeilenumbrüche erhalten */
+  }
+
+  pre {
+    background-color: #f0f0f0;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+    code {
+      font-family: monospace;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+  }
+}
