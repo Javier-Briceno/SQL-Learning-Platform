@@ -2,12 +2,14 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { DatabaseContentDialogComponent } from './database-content-dialog.component';
 
 @Component({
   selector: 'app-datenbanken',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './datenbanken.component.html',
   styleUrl: './datenbanken.component.scss'
 })
@@ -20,7 +22,7 @@ export class DatenbankenComponent {
   selectedDbContent: any = null;
   selectedDbName: string | null = null;
 
-  constructor(private http: HttpClient, private dialog: MatDialog) { }
+  constructor(private http: HttpClient, private dialog: MatDialog, private router: Router) { }
 
   ngOnInit(): void {
     this.loadDatabases();
@@ -85,6 +87,11 @@ export class DatenbankenComponent {
       }
     });
 }
+
+  // Neue Methode für Schema-Anzeige
+  onShowSchema(dbName: string): void {
+    this.router.navigate(['/tutor-dashboard/database-schema', dbName]);
+  }
 
   closeDbContent(): void {
   this.selectedDbContent = null;

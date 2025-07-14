@@ -1,0 +1,121 @@
+<div class="database-creator-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>storage</mat-icon>
+        PostgreSQL-Datenbank erstellen
+      </mat-card-title>
+      <mat-card-subtitle>
+        Erstellen Sie eine neue PostgreSQL-Datenbank mit eigenem SQL-Script
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Beispiel-Scripts -->
+      <div class="examples-section">
+        <h3>Beispiel-Scripts</h3>
+        <div class="example-buttons">
+          <button 
+            mat-raised-button 
+            color="accent" 
+            *ngFor="let example of exampleScripts"
+            (click)="loadExample(example.sql)"
+            class="example-button">
+            {{ example.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Datenbank-Informationen -->
+      <div class="form-section">
+        <h3>Datenbank-Informationen</h3>
+        
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Datenbankname</mat-label>
+          <input 
+            matInput 
+            [(ngModel)]="dbName" 
+            placeholder="z.B. meine_datenbank"
+            [disabled]="isCreating"
+            required>
+          <mat-hint>Muss mit Buchstabe beginnen, nur Buchstaben, Zahlen und Unterstriche</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Beschreibung (optional)</mat-label>
+          <textarea 
+            matInput 
+            [(ngModel)]="description" 
+            placeholder="Kurze Beschreibung der Datenbank..."
+            [disabled]="isCreating"
+            rows="2">
+          </textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- SQL-Script -->
+      <div class="form-section">
+        <h3>SQL-Script</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>SQL-Script</mat-label>
+          <textarea 
+            matInput 
+            [(ngModel)]="sqlScript" 
+            placeholder="CREATE TABLE... INSERT INTO..."
+            [disabled]="isCreating"
+            rows="15"
+            required>
+          </textarea>
+          <mat-hint>
+            Erlaubt: CREATE TABLE, INSERT, SELECT, UPDATE. 
+            Nicht erlaubt: DROP DATABASE, CREATE USER, etc.
+          </mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Aktionen -->
+      <div class="actions-section">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="createDatabase()"
+          [disabled]="isCreating || !dbName || !sqlScript">
+          <mat-icon *ngIf="!isCreating">add</mat-icon>
+          <mat-spinner diameter="20" *ngIf="isCreating"></mat-spinner>
+          {{ isCreating ? 'Erstelle Datenbank...' : 'Datenbank erstellen' }}
+        </button>
+
+        <button 
+          mat-button 
+          (click)="resetForm()"
+          [disabled]="isCreating"
+          class="reset-button">
+          <mat-icon>clear</mat-icon>
+          Zurücksetzen
+        </button>
+      </div>
+
+      <!-- Erfolg-Anzeige -->
+      <div class="success-section" *ngIf="lastCreatedDatabase">
+        <mat-card class="success-card">
+          <mat-card-header>
+            <mat-card-title class="success-title">
+              <mat-icon color="primary">check_circle</mat-icon>
+              Datenbank erfolgreich erstellt!
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p><strong>Name:</strong> {{ lastCreatedDatabase.dbName }}</p>
+            <p><strong>Status:</strong> {{ lastCreatedDatabase.message }}</p>
+            <div *ngIf="lastCreatedDatabase.tablesCreated && lastCreatedDatabase.tablesCreated.length > 0">
+              <p><strong>Erstellte Tabellen:</strong></p>
+              <ul>
+                <li *ngFor="let table of lastCreatedDatabase.tablesCreated">{{ table }}</li>
+              </ul>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
