@@ -774,4 +774,179 @@ export class SqlService {
     
     return matches;
   }
+
+  // Neue Methode für PostgreSQL-Schema-Inspektion
+  async inspectPostgresDatabase(dbName: string, userId: number): Promise<any> {
+    // Zugriffsprüfung: Nutzer muss Owner sein oder Datenbank muss in Worksheet verwendet werden
+    const managedDb = await this.prisma.managedDatabase.findUnique({
+      where: { dbName: dbName }
+    });
+
+    let hasAccess = false;
+    if (managedDb && managedDb.ownerId === userId) {
+      hasAccess = true;
+    } else {
+      // Prüfen, ob die Datenbank in einem Worksheet verwendet wird
+      const worksheet = await this.prisma.worksheet.findFirst({
+        where: { database: dbName }
+      });
+      if (worksheet) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
+      throw new NotFoundException(`Datenbank '${dbName}' wurde nicht gefunden oder ist nicht verfügbar.`);
+    }
+
+    const client = await this.getDatabaseClient(dbName);
+    try {
+      // Database-Level Information
+      const dbInfoRes = await client.query(`
+        SELECT 
+          current_database() as database_name,
+          current_user as current_user,
+          version() as version
+      `);
+
+      // Alle Tabellennamen und grundlegende Informationen holen
+      const tablesRes = await client.query(`
+        SELECT 
+          schemaname,
+          tablename,
+          tableowner,
+          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+        FROM pg_tables 
+        WHERE schemaname = 'public'
+        ORDER BY tablename
+      `);
+
+      const tables = tablesRes.rows.map(r => ({
+        schema: r.schemaname,
+        name: r.tablename,
+        owner: r.tableowner,
+        size: r.size
+      }));
+
+      const result: any = {
+        databaseInfo: dbInfoRes.rows[0],
+        tables: [],
+        indexes: [],
+        sequences: []
+      };
+
+      // Für jede Tabelle detaillierte Informationen holen
+      for (const table of tables) {
+        // Spaltennamen und Typen holen
+        const columnsRes = await client.query(`
+          SELECT 
+            column_name,
+            data_type,
+            is_nullable,
+            column_default,
+            character_maximum_length,
+            numeric_precision,
+            numeric_scale
+          FROM information_schema.columns
+          WHERE table_name = $1 AND table_schema = 'public'
+          ORDER BY ordinal_position
+        `, [table.name]);
+
+        // Constraints holen (Primary Keys, Foreign Keys, etc.)
+        const constraintsRes = await client.query(`
+          SELECT 
+            tc.constraint_name,
+            tc.constraint_type,
+            kcu.column_name,
+            ccu.table_name AS foreign_table_name,
+            ccu.column_name AS foreign_column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu 
+            ON tc.constraint_name = kcu.constraint_name
+          LEFT JOIN information_schema.constraint_column_usage ccu 
+            ON tc.constraint_name = ccu.constraint_name
+          WHERE tc.table_name = $1 AND tc.table_schema = 'public'
+          ORDER BY tc.constraint_type, kcu.column_name
+        `, [table.name]);
+
+        // Indexes für diese Tabelle holen
+        const indexesRes = await client.query(`
+          SELECT 
+            indexname,
+            indexdef
+          FROM pg_indexes 
+          WHERE tablename = $1 AND schemaname = 'public'
+          ORDER BY indexname
+        `, [table.name]);
+
+        // Anzahl der Zeilen in der Tabelle
+        const rowCountRes = await client.query(`SELECT COUNT(*) as count FROM "${table.name}"`);
+
+        // Sample-Daten holen (erste 5 Zeilen)
+        const sampleDataRes = await client.query(`SELECT * FROM "${table.name}" LIMIT 5`);
+
+        result.tables.push({
+          ...table,
+          columns: columnsRes.rows.map(col => ({
+            name: col.column_name,
+            type: col.data_type,
+            nullable: col.is_nullable === 'YES',
+            default: col.column_default,
+            maxLength: col.character_maximum_length,
+            precision: col.numeric_precision,
+            scale: col.numeric_scale
+          })),
+          constraints: constraintsRes.rows.map(cons => ({
+            name: cons.constraint_name,
+            type: cons.constraint_type,
+            column: cons.column_name,
+            foreignTable: cons.foreign_table_name,
+            foreignColumn: cons.foreign_column_name
+          })),
+          indexes: indexesRes.rows.map(idx => ({
+            name: idx.indexname,
+            definition: idx.indexdef
+          })),
+          rowCount: parseInt(rowCountRes.rows[0].count),
+          sampleData: sampleDataRes.rows
+        });
+
+        // Indexes zur globalen Liste hinzufügen
+        result.indexes.push(...indexesRes.rows.map(idx => ({
+          table: table.name,
+          name: idx.indexname,
+          definition: idx.indexdef
+        })));
+      }
+
+      // Sequences holen
+      const sequencesRes = await client.query(`
+        SELECT 
+          sequence_name,
+          data_type,
+          start_value,
+          minimum_value,
+          maximum_value,
+          increment,
+          cycle_option
+        FROM information_schema.sequences
+        WHERE sequence_schema = 'public'
+        ORDER BY sequence_name
+      `);
+
+      result.sequences = sequencesRes.rows.map(seq => ({
+        name: seq.sequence_name,
+        type: seq.data_type,
+        startValue: seq.start_value,
+        minValue: seq.minimum_value,
+        maxValue: seq.maximum_value,
+        increment: seq.increment,
+        cycle: seq.cycle_option === 'YES'
+      }));
+
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
 }

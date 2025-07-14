@@ -77,6 +77,13 @@ export class SqlController {
   return this.sqlService.inspectDatabase(dbName);
 }
 
+  // Neue Route für PostgreSQL-Schema-Inspektion
+  @Get('inspect-postgres/:dbName')
+  @UseGuards(AuthGuard('jwt'))
+  async inspectPostgresDatabase(@Param('dbName') dbName: string, @Request() req) {
+    return this.sqlService.inspectPostgresDatabase(dbName, req.user.id);
+  }
+
   // Route zum Generieren von Aufgaben per KI
   @Post('generate-task')
   async generateTask(@Body() dto: GenerateTaskDto): Promise<{ task: string, aiAnswer: string }> {

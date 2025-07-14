@@ -1,0 +1,245 @@
+<div class="schema-viewer-container">
+  <!-- Header -->
+  <div class="header-section">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>
+      <mat-icon>storage</mat-icon>
+      Datenbankschema: {{ dbName }}
+    </h1>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Lade Datenbankschema...</p>
+  </div>
+
+  <!-- Error -->
+  <mat-card *ngIf="error && !loading" class="error-card">
+    <mat-card-content>
+      <mat-icon color="warn">error</mat-icon>
+      {{ error }}
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Schema Content -->
+  <div *ngIf="schema && !loading">
+    <!-- Database Information -->
+    <mat-card class="db-info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Datenbank-Informationen
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Name:</strong> {{ schema.databaseInfo.database_name }}
+          </div>
+          <div class="info-item">
+            <strong>Benutzer:</strong> {{ schema.databaseInfo.current_user }}
+          </div>
+          <div class="info-item">
+            <strong>Anzahl Tabellen:</strong> {{ schema.tables.length }}
+          </div>
+          <div class="info-item">
+            <strong>PostgreSQL Version:</strong> {{ schema.databaseInfo.version.split(' ')[0] + ' ' + schema.databaseInfo.version.split(' ')[1] }}
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tables Overview -->
+    <mat-card class="tables-overview-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>table_chart</mat-icon>
+          Tabellen-Übersicht
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tables-grid">
+          <div *ngFor="let table of schema.tables" class="table-summary-card">
+            <h4>{{ table.name }}</h4>
+            <div class="table-stats">
+              <span class="stat">
+                <mat-icon>view_column</mat-icon>
+                {{ table.columns.length }} Spalten
+              </span>
+              <span class="stat">
+                <mat-icon>data_usage</mat-icon>
+                {{ table.rowCount }} Zeilen
+              </span>
+              <span class="stat">
+                <mat-icon>storage</mat-icon>
+                {{ table.size }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Detailed Tables Information -->
+    <mat-accordion class="tables-accordion">
+      <mat-expansion-panel *ngFor="let table of schema.tables" class="table-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>table_view</mat-icon>
+            <strong>{{ table.name }}</strong>
+          </mat-panel-title>
+          <mat-panel-description>
+            {{ table.columns.length }} Spalten, {{ table.rowCount }} Zeilen, {{ table.size }}
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <mat-tab-group>
+          <!-- Columns Tab -->
+          <mat-tab label="Spalten">
+            <div class="tab-content">
+              <mat-table [dataSource]="table.columns" class="columns-table">
+                <ng-container matColumnDef="name">
+                  <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+                  <mat-cell *matCellDef="let column">
+                    <strong>{{ column.name }}</strong>
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="type">
+                  <mat-header-cell *matHeaderCellDef>Datentyp</mat-header-cell>
+                  <mat-cell *matCellDef="let column">
+                    <mat-chip>{{ formatDataType(column) }}</mat-chip>
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="nullable">
+                  <mat-header-cell *matHeaderCellDef>Nullable</mat-header-cell>
+                  <mat-cell *matCellDef="let column">
+                    <mat-icon [color]="column.nullable ? 'warn' : 'primary'">
+                      {{ column.nullable ? 'check' : 'close' }}
+                    </mat-icon>
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="default">
+                  <mat-header-cell *matHeaderCellDef>Standard</mat-header-cell>
+                  <mat-cell *matCellDef="let column">
+                    <code *ngIf="column.default; else noDefault">{{ column.default }}</code>
+                    <ng-template #noDefault>-</ng-template>
+                  </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="columnsDisplayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: columnsDisplayedColumns"></mat-row>
+              </mat-table>
+            </div>
+          </mat-tab>
+
+          <!-- Constraints Tab -->
+          <mat-tab label="Constraints" *ngIf="table.constraints.length > 0">
+            <div class="tab-content">
+              <mat-table [dataSource]="table.constraints" class="constraints-table">
+                <ng-container matColumnDef="name">
+                  <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+                  <mat-cell *matCellDef="let constraint">{{ constraint.name }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="type">
+                  <mat-header-cell *matHeaderCellDef>Typ</mat-header-cell>
+                  <mat-cell *matCellDef="let constraint">
+                    <mat-chip [color]="getConstraintTypeColor(constraint.type)">
+                      {{ constraint.type }}
+                    </mat-chip>
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="column">
+                  <mat-header-cell *matHeaderCellDef>Spalte</mat-header-cell>
+                  <mat-cell *matCellDef="let constraint">{{ constraint.column }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="reference">
+                  <mat-header-cell *matHeaderCellDef>Referenz</mat-header-cell>
+                  <mat-cell *matCellDef="let constraint">
+                    {{ getConstraintReference(constraint) }}
+                  </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="constraintsDisplayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: constraintsDisplayedColumns"></mat-row>
+              </mat-table>
+            </div>
+          </mat-tab>
+
+          <!-- Indexes Tab -->
+          <mat-tab label="Indexes" *ngIf="table.indexes.length > 0">
+            <div class="tab-content">
+              <mat-table [dataSource]="table.indexes" class="indexes-table">
+                <ng-container matColumnDef="name">
+                  <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+                  <mat-cell *matCellDef="let index">{{ index.name }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="definition">
+                  <mat-header-cell *matHeaderCellDef>Definition</mat-header-cell>
+                  <mat-cell *matCellDef="let index">
+                    <code class="index-definition">{{ index.definition }}</code>
+                  </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="indexesDisplayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: indexesDisplayedColumns"></mat-row>
+              </mat-table>
+            </div>
+          </mat-tab>
+
+          <!-- Sample Data Tab -->
+          <mat-tab label="Beispieldaten" *ngIf="table.sampleData.length > 0">
+            <div class="tab-content">
+              <p class="sample-info">
+                <mat-icon>info</mat-icon>
+                Erste {{ table.sampleData.length }} Zeilen der Tabelle
+              </p>
+              <div class="sample-data-container">
+                <mat-table [dataSource]="table.sampleData" class="sample-data-table">
+                  <ng-container *ngFor="let column of getSampleDataColumns(table)" [matColumnDef]="column">
+                    <mat-header-cell *matHeaderCellDef>{{ column }}</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row[column] }}</mat-cell>
+                  </ng-container>
+
+                  <mat-header-row *matHeaderRowDef="getSampleDataColumns(table)"></mat-header-row>
+                  <mat-row *matRowDef="let row; columns: getSampleDataColumns(table)"></mat-row>
+                </mat-table>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <!-- Sequences (if any) -->
+    <mat-card *ngIf="schema.sequences.length > 0" class="sequences-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>trending_up</mat-icon>
+          Sequenzen
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="sequences-list">
+          <div *ngFor="let sequence of schema.sequences" class="sequence-item">
+            <h4>{{ sequence.name }}</h4>
+            <div class="sequence-details">
+              <span><strong>Typ:</strong> {{ sequence.type }}</span>
+              <span><strong>Start:</strong> {{ sequence.startValue }}</span>
+              <span><strong>Inkrement:</strong> {{ sequence.increment }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
