@@ -42,6 +42,10 @@ export class AdminDashboardComponent {
 
     // Methode um einen Benutzer zu entsperren
     unsuspendUser(): void { }
+
+    goHome(): void {
+        this.router.navigate(['/overview']);
+    }
 }
 
 

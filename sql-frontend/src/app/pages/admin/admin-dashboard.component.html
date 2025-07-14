@@ -1,21 +1,19 @@
-<mat-toolbar color="primary">
-    <span>Admin Dashboard</span>
-    <div class="container">
-        <div class="top-right">
-            <button mat-raised-button color="primary" (click)="goBack()">
-                <mat-icon>arrow_back</mat-icon>
-                Zurück zur Übersicht
-            </button>
-        </div>
-    </div>
+<mat-toolbar class="tutor-toolbar" color="primary">
+  <span style="color: #fff; font-size: 1.7rem; font-weight: bold; background: none; border: none;">Admin Dashboard</span>
 </mat-toolbar>
 <div class="admin-main-layout">
     <mat-sidenav-container class="admin-sidenav-container">
         <mat-sidenav mode="side" opened class="admin-sidenav-panel">
             <mat-nav-list>
-                <a mat-list-item routerLink="users" routerLinkActive="active-nav-item">Benutzer</a>
-                <a mat-list-item routerLink="settings" routerLinkActive="active-nav-item">Einstellungen</a>
+                <a mat-list-item routerLink="users" routerLinkActive="active-nav-item" style="color: #fff;"> <span style="color: #fff;">Benutzer</span></a>
+                <a mat-list-item routerLink="settings" routerLinkActive="active-nav-item" style="color: #fff;"> <span style="color: #fff;">Einstellungen</span></a>
             </mat-nav-list>
+            <div class="sidenav-bottom-btn">
+      <button mat-button color="accent" (click)="goHome()">
+        <mat-icon>home</mat-icon>
+        Zur Startseite
+      </button>
+      </div>
         </mat-sidenav>
         <mat-sidenav-content class="admin-content-area">
             <div class="content-wrapper">

@@ -8,6 +8,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { MatCard } from '@angular/material/card';
+import { MatFormField } from '@angular/material/form-field';
+import { MatLabel } from '@angular/material/form-field';
 
 
 interface User {
@@ -23,7 +27,7 @@ interface User {
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [MatButtonModule,CommonModule, MatSnackBarModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatTooltipModule],
+  imports: [MatButtonModule,CommonModule, MatSnackBarModule, MatCardModule, MatIconModule, MatTableModule, MatProgressSpinnerModule, MatTooltipModule, FormsModule, MatFormField, MatLabel, MatCard],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss'
 })
@@ -31,6 +35,7 @@ export class UserManagementComponent implements OnInit {
   users: User[] = [];
   loading = true;
   error: string | null = null;
+  searchTerm: string = '';
 
   private apiUrl = 'http://localhost:3000/auth';
 
@@ -73,5 +78,15 @@ export class UserManagementComponent implements OnInit {
         this.error = 'Fehler beim Entsperren des Benutzers';
       }
     });
+  }
+
+  get filteredUsers(): User[] {
+    if (!this.searchTerm?.trim()) return this.users;
+    const term = this.searchTerm.trim().toLowerCase();
+    return this.users.filter(
+      u =>
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term)
+    );
   }
 }
