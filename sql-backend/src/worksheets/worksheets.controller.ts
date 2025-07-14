@@ -27,21 +27,13 @@ export class WorksheetsController {
   }
   // Einzelnes Worksheet abrufen
   @Get(':id')
-  async getWorksheet(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req
-  ): Promise<WorksheetWithTasks> {
-    const userId = req.user.id; // Changed from req.user.sub to req.user.id
-    const userRole = req.user.role;
-
-    // Tutoren und Admins können ihre eigenen Worksheets mit Lösungen sehen
-    if (userRole === 'TUTOR' || userRole === 'ADMIN') {
-      return await this.worksheetsService.getWorksheetById(id, userId);
-    } else {
-      // Studenten sehen Worksheets ohne Lösungen
-      return await this.worksheetsService.getWorksheetById(id);
-    }
-  }// Neues Worksheet erstellen (nur für Tutoren/Admins)
+async getWorksheet(
+  @Param('id', ParseIntPipe) id: number,
+  @Request() req
+): Promise<WorksheetWithTasks> {
+  // Das gesamte User-Objekt übergeben
+  return await this.worksheetsService.getWorksheetById(id, req.user);
+}// Neues Worksheet erstellen (nur für Tutoren/Admins)
   @Post()
   async createWorksheet(
     @Body() createWorksheetDto: CreateWorksheetDto,
@@ -78,24 +70,23 @@ export class WorksheetsController {
   }
   // Worksheet aktualisieren (nur für Tutoren/Admins)
   @Put(':id')
-  async updateWorksheet(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateWorksheetDto: UpdateWorksheetDto,
-    @Request() req
-  ): Promise<WorksheetWithTasks> {
-    const tutorId = req.user.id; // Changed from req.user.sub to req.user.id
-    return await this.worksheetsService.updateWorksheet(id, tutorId, updateWorksheetDto);
-  }
+async updateWorksheet(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() updateWorksheetDto: UpdateWorksheetDto,
+  @Request() req
+): Promise<WorksheetWithTasks> {
+  return this.worksheetsService.updateWorksheet(id, req.user, updateWorksheetDto);
+}
   // Worksheet löschen (nur für Tutoren/Admins)
   @Delete(':id')
-  async deleteWorksheet(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req
-  ): Promise<{ message: string }> {
-    const tutorId = req.user.id; // Changed from req.user.sub to req.user.id
-    await this.worksheetsService.deleteWorksheet(id, tutorId);
-    return { message: 'Übungsblatt erfolgreich gelöscht.' };
-  }
+async deleteWorksheet(
+  @Param('id', ParseIntPipe) id: number,
+  @Request() req
+): Promise<{ message: string }> {
+  const user = { id: req.user.id, role: req.user.role }; // Rolle mitgeben!
+  await this.worksheetsService.deleteWorksheet(id, user);
+  return { message: 'Übungsblatt erfolgreich gelöscht.' };
+}
 
   // Verfügbare Datenbanken abrufen
   @Get('databases/available')

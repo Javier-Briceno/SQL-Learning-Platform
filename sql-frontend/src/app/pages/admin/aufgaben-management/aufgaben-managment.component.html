@@ -1,0 +1,72 @@
+<mat-card class="task-management-container">
+
+  <div class="header-row">
+    <span class="task-table-title">Aufgabenverwaltung</span>
+    <div class="custom-search-field">
+      <input
+        class="custom-input"
+        type="text"
+        placeholder="Suchen..."
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Lade Aufgaben...</span>
+  </div>
+
+  <div *ngIf="error" class="dismissible-error">
+    <span>{{ error }}</span>
+    <button (click)="error = null">✕</button>
+  </div>
+
+  <div *ngIf="!loading && filteredTasks.length > 0">
+    <table mat-table [dataSource]="filteredTasks" class="mat-elevation-z2-task-table">
+
+      <!-- Titel -->
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef>Titel</th>
+        <td mat-cell *matCellDef="let task">{{ task.title }}</td>
+      </ng-container>
+
+      <!-- Beschreibung -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Beschreibung</th>
+        <td mat-cell *matCellDef="let task">
+          {{ task.description?.trim() ? task.description : 'Keine Beschreibung' }}
+        </td>
+      </ng-container>
+
+      <!-- Tutor -->
+      <ng-container matColumnDef="tutor">
+        <th mat-header-cell *matHeaderCellDef>Tutor</th>
+        <td mat-cell *matCellDef="let task">
+          {{ task.tutor?.name }}<br>
+          <span style="color: #888; font-size: 0.95em;">{{ task.tutor?.email }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Aktionen -->
+      <ng-container matColumnDef="actions">
+  <th mat-header-cell *matHeaderCellDef>Aktionen</th>
+  <td mat-cell *matCellDef="let task">
+    <button mat-icon-button color="primary" (click)="editTask(task)">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" (click)="deleteTask(task)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </td>
+</ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="['title', 'description', 'tutor', 'actions']"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['title', 'description', 'tutor', 'actions'];"></tr>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && filteredTasks.length === 0" class="empty-state">
+    Keine Aufgaben gefunden.
+  </div>
+</mat-card>

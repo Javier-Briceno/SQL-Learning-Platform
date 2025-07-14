@@ -18,6 +18,7 @@ import { StudentDashboardComponent } from './student/student-dashboard/student-d
 import { StudentWorksheetComponent } from './student/student-worksheet/student-worksheet.component';
 import { TutorSubmissionsComponent } from './tutor-dashboard/tutor-submissions/tutor-submissions.component';
 import { SubmissionDetailComponent } from './tutor-dashboard/submission-detail/submission-detail.component';
+import { AufgabenManagmentComponent } from './pages/admin/aufgaben-management/aufgaben-managment.component';
 
 export const routes: Routes = [
   {
@@ -39,6 +40,7 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     children: [
       { path: 'users', component: UserManagementComponent },
+      { path: 'aufgaben', component: AufgabenManagmentComponent },
       { path: 'settings', component: SettingsManagementComponent },
     ]
   },  { path: 'tutor-dashboard', component: TutorDashboardComponent, 
