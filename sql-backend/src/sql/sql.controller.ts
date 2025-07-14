@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
 import { CheckQueryDto } from './check-query.dto';
 import { GenerateTaskDto } from './generate-task.dto';
+import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 // DTOs für Query Execution
@@ -28,10 +29,17 @@ export class SqlController {
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async importSqlFile(@UploadedFile() file: Multer.File, @Request() req) {
-  const sql = file.buffer.toString('utf8');
-  const ownerId = req.user.id; // Tutor-ID aus JWT
-  return this.sqlService.executeSqlFile(sql, ownerId);
-}
+    const sql = file.buffer.toString('utf8');
+    const ownerId = req.user.id; // Tutor-ID aus JWT
+    return this.sqlService.executeSqlFile(sql, ownerId);
+  }
+
+  // Neue Route für manuelle PostgreSQL-Datenbank-Erstellung
+  @Post('create-database')
+  @UseGuards(AuthGuard('jwt'))
+  async createDatabase(@Body() createDbDto: CreatePostgresDbDto, @Request() req): Promise<CreatePostgresDbResponse> {
+    return this.sqlService.createPostgresDatabase(createDbDto, req.user.id);
+  }
 
   @Get('databases')
   @UseGuards(AuthGuard('jwt'))

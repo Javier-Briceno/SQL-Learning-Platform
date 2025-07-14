@@ -18,6 +18,7 @@ import { StudentDashboardComponent } from './student/student-dashboard/student-d
 import { StudentWorksheetComponent } from './student/student-worksheet/student-worksheet.component';
 import { TutorSubmissionsComponent } from './tutor-dashboard/tutor-submissions/tutor-submissions.component';
 import { SubmissionDetailComponent } from './tutor-dashboard/submission-detail/submission-detail.component';
+import { DatabaseCreatorComponent } from './tutor-dashboard/database-creator/database-creator.component';
 
 export const routes: Routes = [
   {
@@ -47,6 +48,7 @@ export const routes: Routes = [
     { path: 'students', component: StudentOverviewComponent },
     { path: 'aufgaben', component: MeineAufgabenComponent },
     { path: 'upload', component: SqlUploadComponent },
+    { path: 'create-database', component: DatabaseCreatorComponent },
     { path: 'datenbanken', component: DatenbankenComponent },
     { path: 'query-executor', component: SqlQueryExecutorComponent },    { path: 'worksheets', component: WorksheetOverviewComponent },
     { path: 'worksheets/new', component: WorksheetCreatorComponent },    { path: 'worksheets/edit/:id', component: WorksheetCreatorComponent },

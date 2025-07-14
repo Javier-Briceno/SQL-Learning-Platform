@@ -1,0 +1,120 @@
+.database-creator-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.examples-section {
+  margin-bottom: 30px;
+  
+  h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 500;
+  }
+}
+
+.example-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  
+  .example-button {
+    margin-bottom: 10px;
+  }
+}
+
+.form-section {
+  margin-bottom: 30px;
+  
+  h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 500;
+  }
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.actions-section {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 30px;
+  
+  .reset-button {
+    color: #666;
+  }
+}
+
+.success-section {
+  margin-top: 30px;
+  
+  .success-card {
+    background-color: #f8f9fa;
+    border: 1px solid #d4edda;
+    
+    .success-title {
+      color: #155724;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      mat-icon {
+        color: #28a745;
+      }
+    }
+    
+    p {
+      margin: 8px 0;
+    }
+    
+    ul {
+      margin: 8px 0;
+      padding-left: 20px;
+      
+      li {
+        margin: 4px 0;
+      }
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .database-creator-container {
+    padding: 10px;
+  }
+  
+  .example-buttons {
+    flex-direction: column;
+    
+    .example-button {
+      width: 100%;
+    }
+  }
+  
+  .actions-section {
+    flex-direction: column;
+    align-items: stretch;
+    
+    button {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  }
+}
+
+/* Snackbar Styles */
+::ng-deep .success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+::ng-deep .error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}
