@@ -221,8 +221,9 @@ export class SubmissionsService {
           submission = await prisma.submission.create({
             data: {
               studentId: studentId,
+              userId: studentId, 
               worksheetId: worksheetId,
-              status: 'DRAFT'
+              status: "in_progress"
             }
           });
         } else {

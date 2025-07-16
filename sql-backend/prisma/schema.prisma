@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,6 +5,94 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+/// A registered user (Student, Tutor, Admin)
+/// A registered user (Student, Tutor, Admin)
+model User {
+  id               Int          @id @default(autoincrement())
+  email            String       @unique
+  passwordHash     String
+  name             String
+  role             Role         @default(STUDENT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now()) @updatedAt
+  isBanned         Boolean      @default(false)
+  lastActiveAt     DateTime?    @default(now())
+  submissions      Submission[] @relation("UserSubmissions")
+  studentSubmissions Submission[] @relation("StudentSubmissions")  // Add this line
+  tutorWorksheets  Worksheet[]  @relation("TutorWorksheets")
+}
+model ManagedDatabase {
+  id        Int      @id @default(autoincrement())
+  dbName    String   @unique
+  ownerId   Int
+  createdAt DateTime @default(now())
+}
+
+model Worksheet {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  database    String       // Add database field
+  tutorId     Int          // Add tutorId field
+  dueDate     DateTime?
+  isPublished Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
+  tutor       User         @relation("TutorWorksheets", fields: [tutorId], references: [id])
+  submissions Submission[]
+  tasks       Task[]       @relation("WorksheetTasks")
+}
+
+model Submission {
+  id          Int       @id @default(autoincrement())
+  status      String    @default("in_progress")
+  grade       Int?
+  feedback    String?
+  submittedAt DateTime?
+  gradedAt    DateTime?
+  userId      Int
+  studentId   Int       // Add studentId field
+  worksheetId Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  user        User      @relation("UserSubmissions", fields: [userId], references: [id], onDelete: Cascade)
+  student     User      @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  worksheet   Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  answers     Answer[]  @relation("SubmissionAnswers")
+  
+  @@unique([worksheetId, studentId], name: "worksheetId_studentId")
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  taskType    TaskType
+  order       Int       
+  orderIndex  Int       @default(0)  // Make sure this line exists
+  points      Int       @default(0)
+  options     Json?
+  solution    String?
+  worksheetId Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  worksheet   Worksheet @relation("WorksheetTasks", fields: [worksheetId], references: [id], onDelete: Cascade)
+  answers     Answer[]  @relation("TaskAnswers")
+}
+
+model Answer {
+  id           Int        @id @default(autoincrement())
+  content      String?
+  isCorrect    Boolean?
+  feedback     String?
+  submissionId Int
+  taskId       Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now())
+  submission   Submission @relation("SubmissionAnswers", fields: [submissionId], references: [id], onDelete: Cascade)
+  task         Task       @relation("TaskAnswers", fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 /// Define roles for users
@@ -22,102 +104,13 @@ enum Role {
 
 /// Aufgabentypen für Übungsblätter
 enum TaskType {
-  TEXT       // Normale Textaufgabe
+  MCQ
+  SQL
+  TEXT
 }
 
 /// Status einer Abgabe
 enum SubmissionStatus {
-  DRAFT      // Entwurf, noch nicht abgegeben
-  SUBMITTED  // Abgegeben
-}
-
-/// A registered user (Student, Tutor, Admin)
-model User {
-  id             Int          @id @default(autoincrement())
-  email          String       @unique
-  passwordHash   String
-  name           String
-  role           Role         @default(STUDENT)
-  worksheets     Worksheet[]  // Übungsblätter die der Tutor erstellt hat
-  submissions    Submission[] // Abgaben die der Student gemacht hat
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
-  isBanned       Boolean      @default(false)
-  lastActiveAt   DateTime?
-
-  managedDatabases ManagedDatabase[] 
-}
-
-/// Übungsblätter
-model Worksheet {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String?
-  database    String       // Name der zugeordneten Datenbank
-  tutorId     Int          // ID des Tutors, der das Übungsblatt erstellt hat
-  tutor       User         @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  tasks       Task[]
-  submissions Submission[] // Abgaben von Studenten für dieses Übungsblatt
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now()) @updatedAt
-
-  @@map("worksheets")
-}
-
-/// Einzelne Aufgaben innerhalb eines Übungsblatts
-model Task {
-  id          Int       @id @default(autoincrement())
-  worksheetId Int
-  worksheet   Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
-  title       String
-  description String
-  taskType    TaskType  @default(TEXT)
-  orderIndex  Int       // Reihenfolge der Aufgaben
-  answers     Answer[]  // Antworten von Studenten auf diese Aufgabe
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now()) @updatedAt
-
-  @@map("tasks")
-}
-
-/// Abgaben von Studenten für ein Übungsblatt
-model Submission {
-  id          Int              @id @default(autoincrement())
-  worksheetId Int
-  worksheet   Worksheet        @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
-  studentId   Int
-  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  status      SubmissionStatus @default(DRAFT)
-  answers     Answer[]         // Antworten des Students auf die einzelnen Aufgaben
-  submittedAt DateTime?        // Nur gesetzt wenn status = SUBMITTED
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @default(now()) @updatedAt
-
-  // Ein Student kann pro Übungsblatt nur eine Abgabe haben
-  @@unique([worksheetId, studentId])
-  @@map("submissions")
-}
-
-/// Antworten von Studenten auf einzelne Aufgaben
-model Answer {
-  id           Int        @id @default(autoincrement())
-  submissionId Int
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  taskId       Int
-  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  content      String     // Die Antwort des Students
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now()) @updatedAt
-
-  // Eine Antwort pro Aufgabe pro Abgabe
-  @@unique([submissionId, taskId])
-  @@map("answers")
-}
-
-model ManagedDatabase {
-  id        Int      @id @default(autoincrement())
-  dbName    String   @unique 
-  ownerId   Int?      // Besitzer der Datenbank (Tutor)
-  owner     User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  DRAFT
+  SUBMITTED
 }

@@ -52,9 +52,14 @@ export interface WorksheetWithTasks {
 export interface TaskWithDetails {
   id: number;
   title: string;
-  description: string;
+  description: string | null;  // Change from string to string | null
   taskType: TaskType;
+  order: number;
   orderIndex: number;
+  points: number;
+  options: any;
+  solution: string | null;
+  worksheetId: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -181,11 +186,12 @@ export class WorksheetsService {
           database: database.trim(),
           tutorId,          tasks: {
             create: tasks?.map(task => ({
-              title: task.title.trim(),
-              description: task.description.trim(),
-              taskType: task.taskType,
-              orderIndex: task.orderIndex,
-            })) || [],
+            title: task.title,
+            description: task.description,
+            taskType: task.taskType,
+            order: task.orderIndex || 0,      // Add this line
+            orderIndex: task.orderIndex || 0,
+          })) || [],
           },
         },
         include: {
@@ -299,11 +305,12 @@ export class WorksheetsService {
             }            await prisma.task.create({
               data: {
                 worksheetId: id,
-                title: task.title.trim(),
-                description: task.description.trim(),
+                title: task.title,
+                description: task.description,
                 taskType: task.taskType || TaskType.TEXT,
+                order: task.orderIndex || 0,      // Add this line
                 orderIndex: task.orderIndex || 0,
-              },
+      },
             });          } else if (task._action === 'update' && task.id) {
             const taskData: any = {};
             if (task.title !== undefined) taskData.title = task.title.trim();
@@ -375,14 +382,18 @@ export class WorksheetsService {
         },
         tasks: {
           orderBy: { orderIndex: 'asc' },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            taskType: true,
-            orderIndex: true,
-            createdAt: true,
-            updatedAt: true,
+             select: {
+          id: true,
+          title: true,
+          description: true,
+          taskType: true,
+          order: true,       
+          orderIndex: true,
+          points: true,          
+          options: true,        
+          worksheetId: true,     
+          createdAt: true,
+          updatedAt: true,
             // Lösung für Studenten ausblenden - don't include solution field
           },
         },
