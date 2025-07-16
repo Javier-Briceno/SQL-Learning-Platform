@@ -92,6 +92,7 @@ export class SubmissionDetailComponent implements OnInit {
 
   // Form controls for task evaluations and passed status
   taskEvaluationControls: { [taskId: number]: FormControl } = {};
+  taskPassedControls: { [taskId: number]: FormControl } = {};
   passedControl = new FormControl(false);
   overallFeedbackControl = new FormControl('');
 
@@ -152,9 +153,11 @@ export class SubmissionDetailComponent implements OnInit {
 
           // Initialisiere die FormControls für die Aufgabenbewertungen
           this.taskEvaluationControls = {};
+          this.taskPassedControls = {};
           for (const task of submission.worksheet.tasks) {
             const answer = this.getAnswerForTask(task.id);
             this.taskEvaluationControls[task.id] = new FormControl(answer?.feedback || '');
+            this.taskPassedControls[task.id] = new FormControl(answer?.isCorrect || false);
           }
           
           // Initialize overall feedback and passed status
@@ -253,16 +256,16 @@ export class SubmissionDetailComponent implements OnInit {
     for (const [taskIdStr, control] of Object.entries(this.taskEvaluationControls)) {
       const taskId = parseInt(taskIdStr);
       const feedback = control.value;
-      if (feedback) {
-        // Find the answer for this task
-        const answer = this.submissionDetail?.answers.find(a => a.taskId === taskId);
-        if (answer) {
-          feedbackData.answers.push({
-            id: answer.id,
-            feedback: feedback,
-            isCorrect: undefined // You could add isCorrect logic here later
-          });
-        }
+      const isCorrect = this.taskPassedControls[taskId]?.value;
+      
+      // Find the answer for this task
+      const answer = this.submissionDetail?.answers.find(a => a.taskId === taskId);
+      if (answer) {
+        feedbackData.answers.push({
+          id: answer.id,
+          feedback: feedback || undefined,
+          isCorrect: isCorrect
+        });
       }
     }
 

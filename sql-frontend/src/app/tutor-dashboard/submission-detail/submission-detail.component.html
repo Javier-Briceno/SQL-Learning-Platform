@@ -115,6 +115,7 @@
               <!-- Pass/Fail Toggle per Task (optional for future enhancement) -->
               <div class="task-status-toggle">
                 <mat-slide-toggle
+                  [formControl]="taskPassedControls[task.id]"
                   [disabled]="saving"
                   color="primary">
                   Aufgabe bestanden
