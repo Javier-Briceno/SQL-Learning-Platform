@@ -14,6 +14,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../auth/auth.service';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 interface SubmissionDetail {
   id: number;
@@ -65,7 +66,8 @@ interface Answer {
     MatDividerModule,
     MatTableModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './submission-detail.component.html',
   styleUrl: './submission-detail.component.scss'
@@ -79,6 +81,10 @@ export class SubmissionDetailComponent implements OnInit {
   loading = false; // Alias für Template
   error: string | null = null;
   saving = false;
+
+  // Text selection controls for task evaluations
+  taskEvaluationControls: { [taskId: number]: FormControl } = {};
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -133,6 +139,13 @@ export class SubmissionDetailComponent implements OnInit {
           this.submissionDetail = submission; // Für Template
           this.isLoading = false;
           this.loading = false;
+
+          // Initialisiere die FormControls für die Aufgabenbewertungen
+          this.taskEvaluationControls = {};
+          for (const task of submission.worksheet.tasks) {
+            const answer = this.getAnswerForTask(task.id);
+            this.taskEvaluationControls[task.id] = new FormControl('');
+          }
         },
         error: (err: HttpErrorResponse) => {
           console.error('Fehler beim Laden der Submission:', err);

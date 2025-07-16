@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
 import { CheckQueryDto } from './check-query.dto';
 import { GenerateTaskDto } from './generate-task.dto';
+import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 // DTOs für Query Execution
@@ -28,10 +29,17 @@ export class SqlController {
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async importSqlFile(@UploadedFile() file: Multer.File, @Request() req) {
-  const sql = file.buffer.toString('utf8');
-  const ownerId = req.user.id; // Tutor-ID aus JWT
-  return this.sqlService.executeSqlFile(sql, ownerId);
-}
+    const sql = file.buffer.toString('utf8');
+    const ownerId = req.user.id; // Tutor-ID aus JWT
+    return this.sqlService.executeSqlFile(sql, ownerId);
+  }
+
+  // Neue Route für manuelle PostgreSQL-Datenbank-Erstellung
+  @Post('create-database')
+  @UseGuards(AuthGuard('jwt'))
+  async createDatabase(@Body() createDbDto: CreatePostgresDbDto, @Request() req): Promise<CreatePostgresDbResponse> {
+    return this.sqlService.createPostgresDatabase(createDbDto, req.user.id);
+  }
 
   @Get('databases')
   @UseGuards(AuthGuard('jwt'))
@@ -69,16 +77,26 @@ export class SqlController {
   return this.sqlService.inspectDatabase(dbName);
 }
 
+  // Neue Route für PostgreSQL-Schema-Inspektion
+  @Get('inspect-postgres/:dbName')
+  @UseGuards(AuthGuard('jwt'))
+  async inspectPostgresDatabase(@Param('dbName') dbName: string, @Request() req) {
+    return this.sqlService.inspectPostgresDatabase(dbName, req.user.id);
+  }
+
   // Route zum Generieren von Aufgaben per KI
   @Post('generate-task')
   async generateTask(@Body() dto: GenerateTaskDto): Promise<{ task: string, aiAnswer: string }> {
+
+    const { topic, difficulty, database, noise } = dto;
+    
     // Überprüfen, ob die Eingaben vorhanden sind
     try {
-      if (!dto.topic || !dto.difficulty || !dto.database) {
+      if (!dto.topic || !dto.difficulty || !dto.database || !dto.noise) {
         return { task: '', aiAnswer: 'Fehlende Eingaben.' };
       }
       // Aufruf der Service-Methode zur Generierung der Aufgabe
-      const { taskDescription, sqlQuery } = await this.sqlService.generateTask(dto.topic, dto.difficulty, dto.database);
+      const { taskDescription, sqlQuery } = await this.sqlService.generateTask(topic, difficulty, database, noise);
       // Rückgabe der generierten Aufgabe und der SQL-Abfrage
       return { task: taskDescription, aiAnswer: sqlQuery };
     } catch (error) {

@@ -232,39 +232,55 @@
           
 
           <!-- KI-Aufgaben-Generator -->
-          <div class="ai-task-generator">
-            <mat-form-field appearance="outline">
-              <mat-label>Thema</mat-label>
-              <input
-                matInput
-                [value]="aiTopic"
-                (input)="aiTopic = $any($event.target).value"
-                placeholder="z.B. Join-Operator"
-              />
-            </mat-form-field>
+          <mat-expansion-panel class="ki-panel">
+            <mat-expansion-panel-header>
+              <div class="ki-panel-header">
+                <div class="ki-header-top">
+                  <mat-icon class="ki-icon">smart_toy</mat-icon>
+                  <span class="ki-title">Aufgabe per KI generieren</span>
+                </div>
+                <div class="ki-subtitle">
+                  Nutze GPT zur automatischen Aufgabenerstellung
+                </div>
+              </div>
+            </mat-expansion-panel-header>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Schwierigkeit</mat-label>
-              <mat-select
-                [value]="aiDifficulty"
-                (selectionChange)="aiDifficulty = $event.value"
-                placeholder="— bitte wählen —"
+            <div class="ai-task-generator">
+              <mat-form-field appearance="outline">
+                <mat-label>Thema</mat-label>
+                <input
+                  matInput
+                  [value]="aiTopic"
+                  (input)="aiTopic = $any($event.target).value"
+                  placeholder="z.B. Join-Operator"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Schwierigkeit</mat-label>
+                <mat-select
+                  [value]="aiDifficulty"
+                  (selectionChange)="aiDifficulty = $event.value"
+                  placeholder="— bitte wählen —"
+                >
+                  <mat-option value="leicht">leicht</mat-option>
+                  <mat-option value="mittel">mittel</mat-option>
+                  <mat-option value="schwer">schwer</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button
+                type="button"
+                mat-raised-button
+                color="primary"
+                (click)="generateTask()"
+                [disabled]="isGenerating || !aiTopic || !aiDifficulty || !databaseControl?.value"
               >
-                <mat-option value="leicht">leicht</mat-option>
-                <mat-option value="mittel">mittel</mat-option>
-                <mat-option value="schwer">schwer</mat-option>
-              </mat-select>
-            </mat-form-field>
+                {{ isGenerating ? 'Generiere...' : 'Aufgaben per KI generieren' }}
+              </button>
+            </div>
+          </mat-expansion-panel>
 
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="generateTask()"
-              [disabled]="isGenerating || !aiTopic || !aiDifficulty || !databaseControl?.value"
-            >
-              {{ isGenerating ? 'Generiere...' : 'Aufgaben per KI generieren' }}
-            </button>
-          </div>
           <!-- Ausgabe der KI-Antwort -->
           <div *ngIf="generatedTaskDescription" class="ai-tasks-output" style="margin-top: 1em;">
             <h3>💡 Generierte Aufgabe:</h3>
@@ -272,6 +288,17 @@
 
             <h3>🖥 Beispiel-SQL-Query:</h3>
             <pre><code>{{ generatedSqlQuery }}</code></pre>
+            <div class="ai-task-actions">
+              <button type="button" mat-stroked-button color="primary" (click)="addGeneratedTaskToForm()">
+                <mat-icon>add</mat-icon>
+                Aufgabe übernehmen
+              </button>
+
+              <button type="button" mat-stroked-button color="accent" (click)="runExampleQuery()">
+                <mat-icon>play_arrow</mat-icon>
+                Beispiel-Query ausführen
+              </button>
+            </div>
           </div>
 
           <!-- Aktions-Buttons -->

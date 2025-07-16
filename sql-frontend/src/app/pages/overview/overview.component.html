@@ -38,22 +38,53 @@
 </div>
   
   <div class="task-list-container">
-    <h2>Aufgabenliste</h2>
-    
-    <div class="empty-state">
-      <p>Aktuell sind keine Aufgaben vorhanden.</p>
-      <!-- Hier könnten später Aufgaben dynamisch hinzugefügt werden -->
+  <div style="display: flex; align-items: center; margin-bottom: 24px; justify-content: flex-start;">
+    <h2 style="font-weight: 600; font-size: 2rem; color: #3f51b5; display: flex; align-items: center; margin: 0;">
+      <mat-icon style="margin-right: 10px; color: #3f51b5;">assignment</mat-icon>
+      Aufgabenliste
+    </h2>
+    <div class="custom-search-field" style="min-width: 300px; max-width: 400px; margin-left: 600px;">
+      <input
+        class="custom-input"
+        type="text"
+        placeholder="Suchen nach Titel..."
+        [(ngModel)]="searchTerm"
+        style="width: 100%; padding: 10px 16px; border-radius: 32px; border: 1.5px solid #bdbdbd;"
+      />
     </div>
-    
-    <!-- Beispiel für zukünftige Implementierung:
-    <div class="task-list">
-      <div class="task-item" *ngFor="let task of tasks">
-        <h3>{{ task.title }}</h3>
-        <p>{{ task.description }}</p>
-        <p class="due-date">Fällig bis: {{ task.dueDate | date:'dd.MM.yyyy' }}</p>
-        <button class="btn-primary">Zur Aufgabe</button>
-      </div>
+  </div>
+  <div>
+    <div class="empty-state" *ngIf="filteredWorksheets.length === 0">
+      <mat-icon style="font-size: 3rem; color: #bdbdbd;">assignment_late</mat-icon>
+      <div style="margin-top: 8px; color: #888;">Keine Übungsblätter verfügbar.</div>
     </div>
-    -->
+    <div class="task-list-grid" *ngIf="filteredWorksheets.length > 0">
+      <mat-card *ngFor="let worksheet of filteredWorksheets" class="worksheet-list-card">
+        <mat-card-header>
+          <div mat-card-avatar class="worksheet-avatar">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="worksheet-header-content">
+            <mat-card-title>{{ worksheet.title }}</mat-card-title>
+            <mat-card-subtitle>Datenbank: {{ worksheet.database }}</mat-card-subtitle>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="worksheet-description">
+            {{ worksheet.description || 'Keine Beschreibung vorhanden.' }}
+          </div>
+          <div class="worksheet-tasks">
+            <mat-icon>list_alt</mat-icon>
+            <span>{{ worksheet.tasks?.length || 0 }} Aufgabe(n)</span>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <a mat-flat-button color="primary" class="open-btn" [routerLink]="['/student/worksheet', worksheet.id]">
+            <mat-icon class="open-btn-icon">open_in_new</mat-icon>
+            <span>Bearbeiten</span>
+          </a>
+        </mat-card-actions>
+      </mat-card>
+    </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Client } from 'pg';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
 
 // Interface für Query-Ergebnisse
 export interface QueryResult {
@@ -414,7 +415,7 @@ export class SqlService {
     }
     
     // Generiert eine SQL-Aufgabe basierend auf dem Thema und Schwierigkeitsgrad
-    async generateTask(topic: string, difficulty: string, database: string): Promise<{ taskDescription: string, sqlQuery: string }> {
+    async generateTask(topic: string, difficulty: string, database: string, noise: string): Promise<{ taskDescription: string, sqlQuery: string }> {
         
         // 1) Schema auslesen (Tabellen & Spalten)
         const schemaInfo = await this.inspectDatabase(database);
@@ -432,9 +433,14 @@ export class SqlService {
         Thema: ${topic}
         Schwierigkeitsgrad: ${difficulty}
 
-        Erstelle eine SQL-Übungsaufgabe.  
+        Interner Seed-Wert: ${noise} (nicht anzeigen – nur zur Variation)
+
+        Erstelle eine **vollständig neue und einzigartige** SQL-Übungsaufgabe, die **nicht nur minimale Variationen** einer vorherigen Aufgabe darstellt. 
+        Vermeide Wiederholungen und sorge für kreative Vielfalt innerhalb des angegebenen Themas.
+
         **WICHTIG:** Gib **nur** die reine Aufgaben­beschreibung zurück, **ohne** ein vorangestelltes "**Aufgabe:**" oder andere Überschriften.  
         Die SQL-Abfrage packst du bitte in einen \`\`\`sql …\`\`\`-Block.
+        **Hinweis:** Die SQL-Lösung muss für **PostgreSQL** kompatibel sein.
         `.trim();
 
         // 4) Request an OpenAI
@@ -474,4 +480,478 @@ export class SqlService {
         }
 }
 
+    // Neue Methode für manuelle PostgreSQL-Datenbank-Erstellung
+  async createPostgresDatabase(createDbDto: CreatePostgresDbDto, userId: number): Promise<CreatePostgresDbResponse> {
+    const { dbName, description, sqlScript } = createDbDto;
+
+    // Validierung des Datenbanknamens
+    if (!this.isValidPostgresDbName(dbName)) {
+      throw new BadRequestException('Ungültiger Datenbankname. Muss mit Buchstabe beginnen und darf nur Buchstaben, Zahlen und Unterstriche enthalten.');
+    }
+
+    // Überprüfe, ob Datenbank bereits existiert (in der Verwaltungstabelle)
+    const existingDatabase = await this.prisma.managedDatabase.findUnique({
+      where: { dbName: dbName }
+    });
+
+    if (existingDatabase) {
+      throw new BadRequestException('Eine Datenbank mit diesem Namen existiert bereits');
+    }
+
+    // Validiere SQL-Script auf Sicherheit  
+    if (!this.isValidPostgresSqlScript(sqlScript)) {
+      throw new BadRequestException('SQL-Script enthält nicht erlaubte Befehle. Nur CREATE TABLE, INSERT, UPDATE und SELECT sind erlaubt.');
+    }
+
+    let adminClient: Client | null = null;
+    let newDbClient: Client | null = null;
+
+    try {
+      // 1. PostgreSQL-Datenbank erstellen
+      adminClient = await this.getAdminClient();
+      
+      // Escape den Datenbanknamen für PostgreSQL
+      const escapedDbName = `"${dbName}"`;
+      await adminClient.query(`CREATE DATABASE ${escapedDbName}`);
+
+      console.log(`PostgreSQL database ${dbName} created successfully`);
+
+      // 2. Verbindung zur neuen Datenbank herstellen
+      newDbClient = new Client({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: dbName,
+      });
+      await newDbClient.connect();
+
+      // 3. SQL-Script in der neuen Datenbank ausführen
+      const statements = this.splitPostgresSqlStatements(sqlScript);
+      
+      console.log(`Executing ${statements.length} SQL statements in database ${dbName}`);
+
+      await newDbClient.query('BEGIN');
+
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i].trim();
+        if (statement.length > 0) {
+          try {
+            console.log(`Executing statement ${i + 1}: ${statement.substring(0, 50)}...`);
+            await newDbClient.query(statement);
+          } catch (stmtError) {
+            throw new Error(`SQL Statement Error (Statement ${i + 1}): ${stmtError.message}\nStatement: ${statement}`);
+          }
+        }
+      }
+
+      await newDbClient.query('COMMIT');
+
+      // 4. Datenbank in der Verwaltungstabelle registrieren
+      await this.prisma.managedDatabase.create({
+        data: {
+          dbName: dbName,
+          ownerId: userId,
+          createdAt: new Date(),
+        }
+      });
+
+      // 5. Tabellennamen aus Script extrahieren für Response
+      const tableNames = this.extractTableNamesFromScript(sqlScript);
+
+      return {
+        dbName: dbName,
+        success: true,
+        message: `PostgreSQL-Datenbank '${dbName}' wurde erfolgreich erstellt`,
+        tablesCreated: tableNames
+      };
+
+    } catch (error) {
+      // Bei Fehler: Cleanup und rollback
+      try {
+        if (newDbClient) {
+          await newDbClient.query('ROLLBACK');
+        }
+      } catch (rollbackError) {
+        console.warn('Rollback failed:', rollbackError);
+      }
+
+      // Versuche die PostgreSQL-Datenbank zu löschen falls erstellt
+      try {
+        if (adminClient) {
+          const escapedDbName = `"${dbName}"`;
+          await adminClient.query(`DROP DATABASE IF EXISTS ${escapedDbName}`);
+          console.log(`Cleaned up database ${dbName} after error`);
+        }
+      } catch (cleanupError) {
+        console.warn('Database cleanup failed:', cleanupError);
+      }
+
+      // Entferne Eintrag aus Verwaltungstabelle falls erstellt
+      try {
+        await this.prisma.managedDatabase.delete({
+          where: { dbName: dbName }
+        });
+      } catch (prismaCleanupError) {
+        console.warn('Prisma cleanup failed:', prismaCleanupError);
+      }
+
+      console.error('Database creation error:', error);
+      throw new BadRequestException(`Fehler beim Erstellen der PostgreSQL-Datenbank: ${error.message}`);
+    } finally {
+      if (adminClient) {
+        await adminClient.end();
+      }
+      if (newDbClient) {
+        await newDbClient.end();
+      }
+    }
+  }
+
+  // Hilfsmethoden für PostgreSQL-Datenbank-Erstellung
+  private isValidPostgresDbName(name: string): boolean {
+    const pattern = /^[a-zA-Z][a-zA-Z0-9_]*$/;
+    return pattern.test(name) && name.length >= 3 && name.length <= 63; // PostgreSQL limit
+  }
+
+  private isValidPostgresSqlScript(script: string): boolean {
+    const lowerScript = script.toLowerCase().trim();
+    
+    // Verbotene Befehle - spezifisch für PostgreSQL
+    const forbiddenCommands = [
+      /\bdrop\s+(database|schema|user|role)/i,
+      /\bdelete\s+/i,
+      /\btruncate\s+/i,
+      /\balter\s+(database|user|role)/i,
+      /\bgrant\s+/i,
+      /\brevoke\s+/i,
+      /\bcreate\s+(user|role|database|schema)/i,
+      /\bexec\s+/i,
+      /\bexecute\s+/i,
+      /\bcopy\s+/i,
+      /\b\\copy\s+/i
+    ];
+    
+    // Überprüfe auf verbotene Befehle
+    for (const pattern of forbiddenCommands) {
+      if (pattern.test(lowerScript)) {
+        console.warn('Forbidden PostgreSQL command found:', pattern);
+        return false;
+      }
+    }
+
+    // Teile das Script in SQL-Statements auf
+    const statements = this.splitPostgresSqlStatements(lowerScript);
+    
+    // Erlaubte Statement-Typen für PostgreSQL
+    const allowedStatementPatterns = [
+      /^\s*create\s+table\s+/i,
+      /^\s*create\s+index\s+/i,
+      /^\s*create\s+sequence\s+/i,
+      /^\s*insert\s+into\s+/i,
+      /^\s*update\s+.*\s+set\s+/i,
+      /^\s*select\s+/i,
+      /^\s*with\s+/i, // CTE (Common Table Expressions)
+      /^\s*alter\s+table\s+.*\s+add\s+/i, // Nur ADD erlaubt
+      /^\s*--/i, // Kommentare
+      /^\s*\/\*/i, // Kommentare
+      /^\s*$/i // Leere Statements
+    ];
+
+    for (const statement of statements) {
+      const trimmedStatement = statement.trim();
+      if (trimmedStatement.length === 0) continue;
+      
+      // Entferne Kommentare für die Validierung
+      const cleanStatement = trimmedStatement
+        .replace(/--.*$/gm, '') // Einzeilige Kommentare
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Mehrzeilige Kommentare
+        .trim();
+      
+      if (cleanStatement.length === 0) continue;
+      
+      let isAllowed = false;
+      for (const pattern of allowedStatementPatterns) {
+        if (pattern.test(cleanStatement)) {
+          isAllowed = true;
+          break;
+        }
+      }
+      
+      if (!isAllowed) {
+        console.warn('Potentially unsafe PostgreSQL statement:', cleanStatement.substring(0, 100));
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  private splitPostgresSqlStatements(script: string): string[] {
+    // Ähnlich wie die SQLite-Version, aber angepasst für PostgreSQL
+    const statements: string[] = [];
+    let currentStatement = '';
+    let inString = false;
+    let stringChar = '';
+    let inDollarQuote = false;
+    let dollarTag = '';
+    
+    for (let i = 0; i < script.length; i++) {
+      const char = script[i];
+      const nextChar = script[i + 1];
+      
+      // Handle PostgreSQL dollar-quoted strings
+      if (!inString && !inDollarQuote && char === '$') {
+        const dollarMatch = script.substring(i).match(/^\$([^$]*)\$/);
+        if (dollarMatch) {
+          inDollarQuote = true;
+          dollarTag = dollarMatch[1];
+          currentStatement += dollarMatch[0];
+          i += dollarMatch[0].length - 1;
+          continue;
+        }
+      }
+      
+      if (inDollarQuote) {
+        currentStatement += char;
+        const endTag = `$${dollarTag}$`;
+        if (script.substring(i).startsWith(endTag)) {
+          currentStatement += endTag.substring(1);
+          i += endTag.length - 1;
+          inDollarQuote = false;
+          dollarTag = '';
+        }
+        continue;
+      }
+      
+      // Handle regular string literals
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true;
+        stringChar = char;
+        currentStatement += char;
+      } else if (inString && char === stringChar) {
+        // Check for escaped quotes
+        if (nextChar === stringChar) {
+          currentStatement += char + nextChar;
+          i++; // Skip next character
+        } else {
+          inString = false;
+          stringChar = '';
+          currentStatement += char;
+        }
+      } else if (inString) {
+        currentStatement += char;
+      } else {
+        // Check for statement separator
+        if (char === ';') {
+          const statement = currentStatement.trim();
+          if (statement.length > 0) {
+            statements.push(statement);
+          }
+          currentStatement = '';
+        } else {
+          currentStatement += char;
+        }
+      }
+    }
+    
+    // Add the last statement if there's one
+    const lastStatement = currentStatement.trim();
+    if (lastStatement.length > 0) {
+      statements.push(lastStatement);
+    }
+    
+    return statements;
+  }
+
+  private extractTableNamesFromScript(sqlScript: string): string[] {
+    const tablePattern = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?(\w+)"?\.)?(?:"?(\w+)"?)/gi;
+    const matches: string[] = [];
+    let match;
+    
+    while ((match = tablePattern.exec(sqlScript)) !== null) {
+      // match[2] ist der Tabellenname, match[1] ist das Schema (falls vorhanden)
+      const tableName = match[2] || match[1];
+      if (tableName) {
+        matches.push(tableName);
+      }
+    }
+    
+    return matches;
+  }
+
+  // Neue Methode für PostgreSQL-Schema-Inspektion
+  async inspectPostgresDatabase(dbName: string, userId: number): Promise<any> {
+    // Zugriffsprüfung: Nutzer muss Owner sein oder Datenbank muss in Worksheet verwendet werden
+    const managedDb = await this.prisma.managedDatabase.findUnique({
+      where: { dbName: dbName }
+    });
+
+    let hasAccess = false;
+    if (managedDb && managedDb.ownerId === userId) {
+      hasAccess = true;
+    } else {
+      // Prüfen, ob die Datenbank in einem Worksheet verwendet wird
+      const worksheet = await this.prisma.worksheet.findFirst({
+        where: { database: dbName }
+      });
+      if (worksheet) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
+      throw new NotFoundException(`Datenbank '${dbName}' wurde nicht gefunden oder ist nicht verfügbar.`);
+    }
+
+    const client = await this.getDatabaseClient(dbName);
+    try {
+      // Database-Level Information
+      const dbInfoRes = await client.query(`
+        SELECT 
+          current_database() as database_name,
+          current_user as current_user,
+          version() as version
+      `);
+
+      // Alle Tabellennamen und grundlegende Informationen holen
+      const tablesRes = await client.query(`
+        SELECT 
+          schemaname,
+          tablename,
+          tableowner,
+          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+        FROM pg_tables 
+        WHERE schemaname = 'public'
+        ORDER BY tablename
+      `);
+
+      const tables = tablesRes.rows.map(r => ({
+        schema: r.schemaname,
+        name: r.tablename,
+        owner: r.tableowner,
+        size: r.size
+      }));
+
+      const result: any = {
+        databaseInfo: dbInfoRes.rows[0],
+        tables: [],
+        indexes: [],
+        sequences: []
+      };
+
+      // Für jede Tabelle detaillierte Informationen holen
+      for (const table of tables) {
+        // Spaltennamen und Typen holen
+        const columnsRes = await client.query(`
+          SELECT 
+            column_name,
+            data_type,
+            is_nullable,
+            column_default,
+            character_maximum_length,
+            numeric_precision,
+            numeric_scale
+          FROM information_schema.columns
+          WHERE table_name = $1 AND table_schema = 'public'
+          ORDER BY ordinal_position
+        `, [table.name]);
+
+        // Constraints holen (Primary Keys, Foreign Keys, etc.)
+        const constraintsRes = await client.query(`
+          SELECT 
+            tc.constraint_name,
+            tc.constraint_type,
+            kcu.column_name,
+            ccu.table_name AS foreign_table_name,
+            ccu.column_name AS foreign_column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu 
+            ON tc.constraint_name = kcu.constraint_name
+          LEFT JOIN information_schema.constraint_column_usage ccu 
+            ON tc.constraint_name = ccu.constraint_name
+          WHERE tc.table_name = $1 AND tc.table_schema = 'public'
+          ORDER BY tc.constraint_type, kcu.column_name
+        `, [table.name]);
+
+        // Indexes für diese Tabelle holen
+        const indexesRes = await client.query(`
+          SELECT 
+            indexname,
+            indexdef
+          FROM pg_indexes 
+          WHERE tablename = $1 AND schemaname = 'public'
+          ORDER BY indexname
+        `, [table.name]);
+
+        // Anzahl der Zeilen in der Tabelle
+        const rowCountRes = await client.query(`SELECT COUNT(*) as count FROM "${table.name}"`);
+
+        // Sample-Daten holen (erste 5 Zeilen)
+        const sampleDataRes = await client.query(`SELECT * FROM "${table.name}" LIMIT 5`);
+
+        result.tables.push({
+          ...table,
+          columns: columnsRes.rows.map(col => ({
+            name: col.column_name,
+            type: col.data_type,
+            nullable: col.is_nullable === 'YES',
+            default: col.column_default,
+            maxLength: col.character_maximum_length,
+            precision: col.numeric_precision,
+            scale: col.numeric_scale
+          })),
+          constraints: constraintsRes.rows.map(cons => ({
+            name: cons.constraint_name,
+            type: cons.constraint_type,
+            column: cons.column_name,
+            foreignTable: cons.foreign_table_name,
+            foreignColumn: cons.foreign_column_name
+          })),
+          indexes: indexesRes.rows.map(idx => ({
+            name: idx.indexname,
+            definition: idx.indexdef
+          })),
+          rowCount: parseInt(rowCountRes.rows[0].count),
+          sampleData: sampleDataRes.rows
+        });
+
+        // Indexes zur globalen Liste hinzufügen
+        result.indexes.push(...indexesRes.rows.map(idx => ({
+          table: table.name,
+          name: idx.indexname,
+          definition: idx.indexdef
+        })));
+      }
+
+      // Sequences holen
+      const sequencesRes = await client.query(`
+        SELECT 
+          sequence_name,
+          data_type,
+          start_value,
+          minimum_value,
+          maximum_value,
+          increment,
+          cycle_option
+        FROM information_schema.sequences
+        WHERE sequence_schema = 'public'
+        ORDER BY sequence_name
+      `);
+
+      result.sequences = sequencesRes.rows.map(seq => ({
+        name: seq.sequence_name,
+        type: seq.data_type,
+        startValue: seq.start_value,
+        minValue: seq.minimum_value,
+        maxValue: seq.maximum_value,
+        increment: seq.increment,
+        cycle: seq.cycle_option === 'YES'
+      }));
+
+      return result;
+    } finally {
+      await client.end();
+    }
+  }
 }

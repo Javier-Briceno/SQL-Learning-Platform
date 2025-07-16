@@ -91,34 +91,34 @@ export class WorksheetsService {
   }
 
   // Einzelnes Worksheet mit Tasks abrufen
-  async getWorksheetById(id: number, tutorId?: number): Promise<WorksheetWithTasks> {
-    const worksheet = await this.prisma.worksheet.findUnique({
-      where: { id },
-      include: {
-        tutor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        tasks: {
-          orderBy: { orderIndex: 'asc' },
+  async getWorksheetById(id: number, user: { id: number; role: string }): Promise<WorksheetWithTasks> {
+  const worksheet = await this.prisma.worksheet.findUnique({
+    where: { id },
+    include: {
+      tutor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
-    });
+      tasks: {
+        orderBy: { orderIndex: 'asc' },
+      },
+    },
+  });
 
-    if (!worksheet) {
-      throw new NotFoundException(`Übungsblatt mit ID ${id} nicht gefunden.`);
-    }
-
-    // Überprüfe, ob der Tutor berechtigt ist (falls tutorId angegeben)
-    if (tutorId && worksheet.tutorId !== tutorId) {
-      throw new ForbiddenException('Sie sind nicht berechtigt, dieses Übungsblatt zu bearbeiten.');
-    }
-
-    return worksheet;
+  if (!worksheet) {
+    throw new NotFoundException(`Übungsblatt mit ID ${id} nicht gefunden.`);
   }
+
+  // Berechtigungsprüfung: Tutor ODER Admin
+  if (user && worksheet.tutorId !== user.id && user.role !== 'ADMIN') {
+    throw new ForbiddenException('Sie sind nicht berechtigt, dieses Übungsblatt zu bearbeiten.');
+  }
+
+  return worksheet;
+}
   // Neues Worksheet erstellen
   async createWorksheet(tutorId: number, createWorksheetDto: CreateWorksheetDto): Promise<WorksheetWithTasks> {
     try {
@@ -248,11 +248,15 @@ export class WorksheetsService {
   }
 
   // Worksheet aktualisieren
-  async updateWorksheet(id: number, tutorId: number, updateWorksheetDto: UpdateWorksheetDto): Promise<WorksheetWithTasks> {
+  async updateWorksheet(id: number, user: { id: number; role: string }, updateWorksheetDto: UpdateWorksheetDto): Promise<WorksheetWithTasks> {
     // Überprüfe, ob Worksheet existiert und dem Tutor gehört
-    const existingWorksheet = await this.getWorksheetById(id, tutorId);
+    const existingWorksheet = await this.getWorksheetById(id, user);
 
-    const { title, description, database, tasks } = updateWorksheetDto;
+    if (user.role !== 'ADMIN' && existingWorksheet.tutorId !== user.id) {
+    throw new ForbiddenException('Keine Berechtigung, dieses Übungsblatt zu bearbeiten');
+  }
+
+  const { title, description, database, tasks } = updateWorksheetDto;
 
     // Validierung
     if (title !== undefined && (!title || title.trim().length === 0)) {
@@ -350,15 +354,19 @@ export class WorksheetsService {
   }
 
   // Worksheet löschen
-  async deleteWorksheet(id: number, tutorId: number): Promise<void> {
-    // Überprüfe, ob Worksheet existiert und dem Tutor gehört
-    await this.getWorksheetById(id, tutorId);
+  async deleteWorksheet(id: number, user: { id: number, role: string }): Promise<void> {
+  // Worksheet laden
+  const worksheet = await this.prisma.worksheet.findUnique({ where: { id } });
+  if (!worksheet) throw new NotFoundException('Worksheet nicht gefunden.');
 
-    // Lösche Worksheet (Tasks werden durch CASCADE automatisch gelöscht)
-    await this.prisma.worksheet.delete({
-      where: { id },
-    });
+  // Berechtigungsprüfung: Tutor oder Admin
+  if (worksheet.tutorId !== user.id && user.role !== 'ADMIN') {
+    throw new ForbiddenException('Sie sind nicht berechtigt, dieses Übungsblatt zu löschen.');
   }
+
+  // Löschen
+  await this.prisma.worksheet.delete({ where: { id } });
+}
 
   // Alle verfügbaren Datenbanken abrufen
   async getAvailableDatabases(): Promise<string[]> {

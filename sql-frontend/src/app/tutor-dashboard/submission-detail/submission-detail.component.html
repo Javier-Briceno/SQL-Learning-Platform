@@ -106,10 +106,9 @@
                 <mat-label>Bewertung/Kommentar</mat-label>
                 <textarea
                   matInput
-                  [value]="getAnswerForTask(task.id)?.content || ''"
+                  [formControl]="taskEvaluationControls[task.id]"
                   placeholder="Hier könnten Bewertungen eingegeben werden..."
-                  rows="3"
-                  readonly>
+                  rows="3">
                 </textarea>
               </mat-form-field>
             </div>

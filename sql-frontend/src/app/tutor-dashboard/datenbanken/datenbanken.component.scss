@@ -45,64 +45,72 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
+    padding: 15px;
+    background-color: white;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 5px;
     margin-bottom: 10px;
-    background-color: #fff;
-    transition: box-shadow 0.2s ease-in-out;
-
-    &:hover {
-        box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     .db-name {
-      font-size: 16px;
+      font-weight: bold;
       color: #333;
       flex-grow: 1;
-      margin-right: 15px;
     }
 
-    .show-db-button {
-      background-color: #1976d2;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s ease;
-      margin-right: 8px;
-      flex-shrink: 0;
+    .db-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
 
-      &:hover:not(:disabled) {
-        background-color: #1251a3;
-      }
+      button {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
 
-      &:disabled {
-        background-color: #bbdefb;
-        cursor: not-allowed;
-      }
-    }
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
 
-    .delete-db-button {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s ease;
-      flex-shrink: 0;
+        &.schema-button {
+          background-color: #2196f3;
+          color: white;
 
-      &:hover:not(:disabled) {
-        background-color: #c82333;
-      }
+          &:hover:not(:disabled) {
+            background-color: #1976d2;
+          }
+        }
 
-      &:disabled {
-        background-color: #f8d7da;
-        cursor: not-allowed;
+        &.show-db-button {
+          background-color: #4caf50;
+          color: white;
+
+          &:hover:not(:disabled) {
+            background-color: #388e3c;
+          }
+        }
+
+        &.delete-db-button {
+          background-color: #f44336;
+          color: white;
+
+          &:hover:not(:disabled) {
+            background-color: #d32f2f;
+          }
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
     }
   }
@@ -149,5 +157,24 @@ table {
   &:disabled {
     background-color: #bbdefb;
     cursor: not-allowed;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .database-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    .db-actions {
+      width: 100%;
+      justify-content: space-between;
+
+      button {
+        flex: 1;
+        justify-content: center;
+      }
+    }
   }
 }

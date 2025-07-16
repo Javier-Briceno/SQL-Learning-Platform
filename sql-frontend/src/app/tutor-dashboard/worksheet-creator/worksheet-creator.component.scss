@@ -535,22 +535,70 @@ mat-form-field {
   border-left-color: #9c27b0;
 }
 
+.ki-panel{
+  margin-top: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+  box-shadow: none;
+
+  .mat-expansion-panel-header {
+    
+    color: #1565c0;
+
+    mat-icon {
+      color: #2196f3;
+    }
+
+    .ki-panel-header {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .ki-header-top {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ki-icon {
+      color: #2196f3;
+    }
+
+    .ki-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .ki-subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.25rem;
+      padding-left: 2rem; // para alinear con el texto si el icono es grande
+    }
+  }
+}
+
 /* --- Container für das Topic/Difficulty-Formular und Button --- */
+
 .ai-task-generator {
   display: grid;
   grid-template-columns: 1fr;   // eine Spalte: Label+Input und Button
   grid-template-rows: auto auto auto;     // drei Zeilen: Thema-Zeile, Difficulty-Zeile und Button-Zeile
-  row-gap: 0.5rem; // Abstand zwischen den Elementen
+  row-gap: 0.25rem; // Abstand zwischen den Elementen
   align-items: center;
-  margin-top: 2rem;
+  margin-top: 0;
   padding: 1rem;
-  border: 1px solid #ccc;   // passe die Variable an dein Theme an
+  padding-top: 0.5rem;
+  border: none;   // passe die Variable an dein Theme an
   border-radius: 0.25rem;
-  background-color: #f9f9f9; // z.B. weiß oder hellgrau
+  background-color: transparent; // z.B. weiß oder hellgrau
 
   // Alle mat-form-field im ai-task-generator auf volle Breite
   > mat-form-field {
     width: 100%;
+    margin-bottom: 0;
   }
 
   // Erstes mat-form-field (Thema)
@@ -625,6 +673,15 @@ mat-form-field {
       font-family: monospace;
       font-size: 0.9rem;
       line-height: 1.3;
+    }
+  }
+  .ai-task-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    button {
+      font-weight: 500;
     }
   }
 }

@@ -32,7 +32,8 @@
 .admin-main-layout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px - 70px); 
+  height: calc(100vh - 64px);
+  overflow: hidden;
 }
 
 .admin-sidenav-container {
@@ -41,9 +42,20 @@
 }
 
 .admin-sidenav-panel {
-  width: 250px;
+  width: 220px;
   padding: 16px;
-  border-right: 1px solid rgba(0, 0, 0, .12); 
+  border-right: 1px solid rgba(0, 0, 0, .12);
+  background-color: #252525;
+
+  .sidenav-bottom-btn {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 16px 0 16px 16px;
+    background: inherit;
+    box-sizing: border-box;
+  }
 }
 
 .admin-content-area {
@@ -63,4 +75,11 @@
   &:hover {
     background-color: rgba(0, 0, 0, 0.02);
   }
+}
+
+.tutor-toolbar {
+  background: #424242 !important;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  min-height: 56px;
 }
