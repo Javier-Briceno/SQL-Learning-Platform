@@ -24,4 +24,9 @@ export class GenerateTaskDto {
   @IsNotEmpty()
   /** Name der PostgreSQL-Datenbank, in der die Tabellen liegen */
   database: string;
+
+  @IsString()
+  @IsNotEmpty()
+  /** Zufälliger Noise-Wert für bessere Entropie */
+  noise: string;
 }

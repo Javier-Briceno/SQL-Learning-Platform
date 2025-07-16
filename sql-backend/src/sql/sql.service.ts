@@ -415,7 +415,7 @@ export class SqlService {
     }
     
     // Generiert eine SQL-Aufgabe basierend auf dem Thema und Schwierigkeitsgrad
-    async generateTask(topic: string, difficulty: string, database: string): Promise<{ taskDescription: string, sqlQuery: string }> {
+    async generateTask(topic: string, difficulty: string, database: string, noise: string): Promise<{ taskDescription: string, sqlQuery: string }> {
         
         // 1) Schema auslesen (Tabellen & Spalten)
         const schemaInfo = await this.inspectDatabase(database);
@@ -433,9 +433,14 @@ export class SqlService {
         Thema: ${topic}
         Schwierigkeitsgrad: ${difficulty}
 
-        Erstelle eine SQL-Übungsaufgabe.  
+        Interner Seed-Wert: ${noise} (nicht anzeigen – nur zur Variation)
+
+        Erstelle eine **vollständig neue und einzigartige** SQL-Übungsaufgabe, die **nicht nur minimale Variationen** einer vorherigen Aufgabe darstellt. 
+        Vermeide Wiederholungen und sorge für kreative Vielfalt innerhalb des angegebenen Themas.
+
         **WICHTIG:** Gib **nur** die reine Aufgaben­beschreibung zurück, **ohne** ein vorangestelltes "**Aufgabe:**" oder andere Überschriften.  
         Die SQL-Abfrage packst du bitte in einen \`\`\`sql …\`\`\`-Block.
+        **Hinweis:** Die SQL-Lösung muss für **PostgreSQL** kompatibel sein.
         `.trim();
 
         // 4) Request an OpenAI

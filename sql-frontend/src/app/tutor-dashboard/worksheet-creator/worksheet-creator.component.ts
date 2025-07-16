@@ -434,7 +434,7 @@ export class WorksheetCreatorComponent implements OnInit {
   // KI Generierung starten
   generateTask(): void {
     // Logge die Eingaben für Debugging
-    console.log('⭐ generateTask ausgelöst mit:', {
+    console.log('generateTask ausgelöst mit:', {
       topic: this.aiTopic,
       difficulty: this.aiDifficulty,
       database: this.databaseControl?.value
@@ -443,6 +443,7 @@ export class WorksheetCreatorComponent implements OnInit {
     const topic = this.aiTopic.trim();
     const difficulty = this.aiDifficulty.trim();
     const database = this.databaseControl?.value;
+    const noise = Math.random().toString(36).slice(2, 8);
 
     if (!topic || !difficulty || !database) {
       return;
@@ -452,7 +453,12 @@ export class WorksheetCreatorComponent implements OnInit {
     this.generatedTasks = [];
 
     this.http
-      .post<{ task: string; aiAnswer: string }>('http://localhost:3000/sql/generate-task', { topic, difficulty, database })
+      .post<{ task: string; aiAnswer: string }>('http://localhost:3000/sql/generate-task', { 
+        topic, 
+        difficulty, 
+        database,
+        noise
+      })
       .subscribe({
         next: (res) => {
           // Ganze Rohbeschreibung
@@ -470,5 +476,39 @@ export class WorksheetCreatorComponent implements OnInit {
           this.isGenerating = false;
         },
       });
+  }
+
+  addGeneratedTaskToForm(): void {
+    if (!this.generatedTaskDescription) return;
+
+    const title = `Aufgabe ${this.tasksFormArray.length + 1}`;
+    const description = this.generatedTaskDescription;
+
+    const taskForm = this.fb.group({
+      id: [null],
+      title: [title, [Validators.required]],
+      description: [description, [Validators.required]],
+      taskType: ['TEXT', [Validators.required]],
+      solution: [''],
+      orderIndex: [this.tasksFormArray.length],
+      _action: ['create']
+    });
+
+    this.tasksFormArray.push(taskForm);
+    this.snackBar.open('Aufgabe hinzugefügt', 'OK', { duration: 2000 });
+  }
+
+  runExampleQuery(): void {
+    if (!this.generatedSqlQuery || !this.databaseControl?.value || !this.sqlExecutor) return;
+
+    this.sqlExecutor.queryForm.patchValue({
+      database: this.databaseControl.value,
+      query: this.generatedSqlQuery
+    });
+
+    // Wait a bit to ensure the form is updated before executing
+    setTimeout(() => {
+      this.sqlExecutor.executeQuery(); // This will trigger the query execution
+    }, 200);
   }
 }

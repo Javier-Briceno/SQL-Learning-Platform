@@ -87,13 +87,16 @@ export class SqlController {
   // Route zum Generieren von Aufgaben per KI
   @Post('generate-task')
   async generateTask(@Body() dto: GenerateTaskDto): Promise<{ task: string, aiAnswer: string }> {
+
+    const { topic, difficulty, database, noise } = dto;
+    
     // Überprüfen, ob die Eingaben vorhanden sind
     try {
-      if (!dto.topic || !dto.difficulty || !dto.database) {
+      if (!dto.topic || !dto.difficulty || !dto.database || !dto.noise) {
         return { task: '', aiAnswer: 'Fehlende Eingaben.' };
       }
       // Aufruf der Service-Methode zur Generierung der Aufgabe
-      const { taskDescription, sqlQuery } = await this.sqlService.generateTask(dto.topic, dto.difficulty, dto.database);
+      const { taskDescription, sqlQuery } = await this.sqlService.generateTask(topic, difficulty, database, noise);
       // Rückgabe der generierten Aufgabe und der SQL-Abfrage
       return { task: taskDescription, aiAnswer: sqlQuery };
     } catch (error) {
