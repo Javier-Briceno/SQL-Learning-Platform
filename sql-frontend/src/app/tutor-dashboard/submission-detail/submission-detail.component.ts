@@ -240,9 +240,13 @@ export class SubmissionDetailComponent implements OnInit {
     
     // Prepare feedback data
     const feedbackData = {
-      submissionFeedback: this.overallFeedbackControl.value,
+      feedback: this.overallFeedbackControl.value,
       passed: this.passedControl.value,
-      answerFeedback: {} as { [taskId: number]: { feedback: string; isCorrect?: boolean } }
+      answers: [] as Array<{
+        id: number;
+        feedback?: string;
+        isCorrect?: boolean;
+      }>
     };
 
     // Collect individual task feedback
@@ -250,10 +254,15 @@ export class SubmissionDetailComponent implements OnInit {
       const taskId = parseInt(taskIdStr);
       const feedback = control.value;
       if (feedback) {
-        feedbackData.answerFeedback[taskId] = {
-          feedback: feedback,
-          isCorrect: undefined // You could add isCorrect logic here later
-        };
+        // Find the answer for this task
+        const answer = this.submissionDetail?.answers.find(a => a.taskId === taskId);
+        if (answer) {
+          feedbackData.answers.push({
+            id: answer.id,
+            feedback: feedback,
+            isCorrect: undefined // You could add isCorrect logic here later
+          });
+        }
       }
     }
 
@@ -266,7 +275,7 @@ export class SubmissionDetailComponent implements OnInit {
           
           // Update local data
           if (this.submission) {
-            this.submission.feedback = feedbackData.submissionFeedback || undefined;
+            this.submission.feedback = feedbackData.feedback || undefined;
             this.submission.passed = feedbackData.passed || undefined;
             this.submissionDetail = this.submission;
           }

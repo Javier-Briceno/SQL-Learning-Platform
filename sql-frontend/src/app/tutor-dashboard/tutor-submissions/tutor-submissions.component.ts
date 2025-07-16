@@ -20,6 +20,7 @@ interface TutorSubmission {
   createdAt: string;
   updatedAt: string;
   passed?: boolean;
+  feedback?: string;
   student: {
     id: number;
     name: string;
@@ -65,7 +66,7 @@ export class TutorSubmissionsComponent implements OnInit {
   isLoading = false;
   selectedTabIndex = 0;
 
-  displayedColumns: string[] = ['student', 'worksheet', 'status', 'passed', 'progress', 'date', 'actions'];
+  displayedColumns: string[] = ['student', 'worksheet', 'status', 'passed', 'progress', 'feedback', 'date', 'actions'];
 
   constructor(
     private http: HttpClient,
@@ -169,6 +170,10 @@ export class TutorSubmissionsComponent implements OnInit {
     if (submission.passed === true) return 'check_circle';
     if (submission.passed === false) return 'cancel';
     return 'help';
+  }
+
+  hasFeedback(submission: TutorSubmission): boolean {
+    return !!submission.feedback;
   }
 
   formatDate(dateString: string): string {

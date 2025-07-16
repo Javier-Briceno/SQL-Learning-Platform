@@ -47,6 +47,9 @@ interface StudentSubmission {
   id: number;
   status: 'DRAFT' | 'SUBMITTED';
   submittedAt?: string;
+  passed?: boolean;
+  feedback?: string;
+  gradedAt?: string;
   createdAt: string;
   updatedAt: string;
   worksheet: {
@@ -232,6 +235,28 @@ export class StudentDashboardComponent implements OnInit {
 
   getSubmissionStatusColor(submission: StudentSubmission): string {
     return submission.status === 'SUBMITTED' ? 'accent' : 'warn';
+  }
+
+  getPassedStatusText(submission: StudentSubmission): string {
+    if (submission.passed === true) return 'Bestanden';
+    if (submission.passed === false) return 'Nicht bestanden';
+    return 'Noch nicht bewertet';
+  }
+
+  getPassedStatusIcon(submission: StudentSubmission): string {
+    if (submission.passed === true) return 'check_circle';
+    if (submission.passed === false) return 'cancel';
+    return 'help';
+  }
+
+  getPassedStatusColor(submission: StudentSubmission): string {
+    if (submission.passed === true) return 'accent';
+    if (submission.passed === false) return 'warn';
+    return 'primary';
+  }
+
+  hasFeedback(submission: StudentSubmission): boolean {
+    return !!submission.feedback;
   }
 
   formatDate(dateString: string): string {

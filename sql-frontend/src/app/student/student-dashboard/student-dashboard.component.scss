@@ -161,8 +161,13 @@
     align-items: flex-start;
     margin-top: 16px;
     
+    .mat-mdc-chip {
+      margin-bottom: 4px;
+    }
+    
     .submitted-date,
-    .last-edited {
+    .last-edited,
+    .graded-date {
       font-size: 0.85rem;
       color: #999;
       font-style: italic;
@@ -170,6 +175,10 @@
     
     .submitted-date {
       color: #4caf50;
+    }
+    
+    .graded-date {
+      color: #2196f3;
     }
   }
   

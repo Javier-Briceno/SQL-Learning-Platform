@@ -181,12 +181,28 @@
                   {{ getSubmissionStatusText(submission) }}
                 </mat-chip>
                 
+                <!-- Passed Status (nur wenn abgegeben) -->
+                <mat-chip *ngIf="submission.status === 'SUBMITTED'" [color]="getPassedStatusColor(submission)" selected>
+                  <mat-icon matChipAvatar>{{ getPassedStatusIcon(submission) }}</mat-icon>
+                  {{ getPassedStatusText(submission) }}
+                </mat-chip>
+                
+                <!-- Feedback indicator -->
+                <mat-chip *ngIf="submission.status === 'SUBMITTED' && hasFeedback(submission)" color="accent" selected>
+                  <mat-icon matChipAvatar>feedback</mat-icon>
+                  Feedback verfügbar
+                </mat-chip>
+                
                 <span *ngIf="submission.status === 'SUBMITTED'" class="submitted-date">
                   Abgegeben: {{ formatDate(submission.submittedAt!) }}
                 </span>
                 
                 <span *ngIf="submission.status === 'DRAFT'" class="last-edited">
                   Zuletzt bearbeitet: {{ formatDate(submission.updatedAt) }}
+                </span>
+                
+                <span *ngIf="submission.gradedAt" class="graded-date">
+                  Bewertet: {{ formatDate(submission.gradedAt) }}
                 </span>
               </div>
             </mat-card-content>

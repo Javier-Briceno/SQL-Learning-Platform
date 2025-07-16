@@ -101,6 +101,23 @@
                 </td>
               </ng-container>
 
+              <!-- Feedback Column -->
+              <ng-container matColumnDef="feedback">
+                <th mat-header-cell *matHeaderCellDef>Feedback</th>
+                <td mat-cell *matCellDef="let submission">
+                  <div class="feedback-info">
+                    <mat-chip *ngIf="hasFeedback(submission)" color="accent" selected>
+                      <mat-icon matChipAvatar>feedback</mat-icon>
+                      Verfügbar
+                    </mat-chip>
+                    <mat-chip *ngIf="!hasFeedback(submission)" color="primary" selected>
+                      <mat-icon matChipAvatar>help_outline</mat-icon>
+                      Kein Feedback
+                    </mat-chip>
+                  </div>
+                </td>
+              </ng-container>
+
               <!-- Date Column -->
               <ng-container matColumnDef="date">
                 <th mat-header-cell *matHeaderCellDef>Datum</th>
@@ -210,6 +227,23 @@
                 </td>
               </ng-container>
 
+              <!-- Feedback Column -->
+              <ng-container matColumnDef="feedback">
+                <th mat-header-cell *matHeaderCellDef>Feedback</th>
+                <td mat-cell *matCellDef="let submission">
+                  <div class="feedback-info">
+                    <mat-chip *ngIf="hasFeedback(submission)" color="accent" selected>
+                      <mat-icon matChipAvatar>feedback</mat-icon>
+                      Verfügbar
+                    </mat-chip>
+                    <mat-chip *ngIf="!hasFeedback(submission)" color="primary" selected>
+                      <mat-icon matChipAvatar>help_outline</mat-icon>
+                      Kein Feedback
+                    </mat-chip>
+                  </div>
+                </td>
+              </ng-container>
+
               <!-- Date Column -->
               <ng-container matColumnDef="date">
                 <th mat-header-cell *matHeaderCellDef>Datum</th>
@@ -314,6 +348,23 @@
                     <mat-chip [color]="getProgressColor(getProgressPercentage(submission))" selected>
                       {{ submission._count.answers }} / {{ submission.worksheet._count.tasks }}
                       ({{ getProgressPercentage(submission) }}%)
+                    </mat-chip>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Feedback Column -->
+              <ng-container matColumnDef="feedback">
+                <th mat-header-cell *matHeaderCellDef>Feedback</th>
+                <td mat-cell *matCellDef="let submission">
+                  <div class="feedback-info">
+                    <mat-chip *ngIf="hasFeedback(submission)" color="accent" selected>
+                      <mat-icon matChipAvatar>feedback</mat-icon>
+                      Verfügbar
+                    </mat-chip>
+                    <mat-chip *ngIf="!hasFeedback(submission)" color="primary" selected>
+                      <mat-icon matChipAvatar>help_outline</mat-icon>
+                      Kein Feedback
                     </mat-chip>
                   </div>
                 </td>
