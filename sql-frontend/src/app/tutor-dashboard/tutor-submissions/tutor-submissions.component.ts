@@ -19,6 +19,7 @@ interface TutorSubmission {
   submittedAt?: string;
   createdAt: string;
   updatedAt: string;
+  passed?: boolean;
   student: {
     id: number;
     name: string;
@@ -64,7 +65,7 @@ export class TutorSubmissionsComponent implements OnInit {
   isLoading = false;
   selectedTabIndex = 0;
 
-  displayedColumns: string[] = ['student', 'worksheet', 'status', 'progress', 'date', 'actions'];
+  displayedColumns: string[] = ['student', 'worksheet', 'status', 'passed', 'progress', 'date', 'actions'];
 
   constructor(
     private http: HttpClient,
@@ -150,6 +151,24 @@ export class TutorSubmissionsComponent implements OnInit {
     if (percentage >= 100) return 'accent';
     if (percentage >= 50) return 'primary';
     return 'warn';
+  }
+
+  getPassedStatusText(submission: TutorSubmission): string {
+    if (submission.passed === true) return 'Bestanden';
+    if (submission.passed === false) return 'Nicht bestanden';
+    return 'Nicht bewertet';
+  }
+
+  getPassedStatusColor(submission: TutorSubmission): string {
+    if (submission.passed === true) return 'accent';
+    if (submission.passed === false) return 'warn';
+    return 'primary';
+  }
+
+  getPassedStatusIcon(submission: TutorSubmission): string {
+    if (submission.passed === true) return 'check_circle';
+    if (submission.passed === false) return 'cancel';
+    return 'help';
   }
 
   formatDate(dateString: string): string {

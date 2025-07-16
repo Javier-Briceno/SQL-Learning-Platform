@@ -77,6 +77,17 @@
                 </td>
               </ng-container>
 
+              <!-- Passed Column -->
+              <ng-container matColumnDef="passed">
+                <th mat-header-cell *matHeaderCellDef>Bewertung</th>
+                <td mat-cell *matCellDef="let submission">
+                  <mat-chip [color]="getPassedStatusColor(submission)" selected>
+                    <mat-icon matChipAvatar>{{ getPassedStatusIcon(submission) }}</mat-icon>
+                    {{ getPassedStatusText(submission) }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
               <!-- Progress Column -->
               <ng-container matColumnDef="progress">
                 <th mat-header-cell *matHeaderCellDef>Fortschritt</th>
@@ -175,6 +186,17 @@
                 </td>
               </ng-container>
 
+              <!-- Passed Column -->
+              <ng-container matColumnDef="passed">
+                <th mat-header-cell *matHeaderCellDef>Bewertung</th>
+                <td mat-cell *matCellDef="let submission">
+                  <mat-chip [color]="getPassedStatusColor(submission)" selected>
+                    <mat-icon matChipAvatar>{{ getPassedStatusIcon(submission) }}</mat-icon>
+                    {{ getPassedStatusText(submission) }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
               <!-- Progress Column -->
               <ng-container matColumnDef="progress">
                 <th mat-header-cell *matHeaderCellDef>Fortschritt</th>
@@ -269,6 +291,17 @@
                   <mat-chip [color]="getSubmissionStatusColor(submission)" selected>
                     <mat-icon matChipAvatar>{{ getSubmissionStatusIcon(submission) }}</mat-icon>
                     {{ getSubmissionStatusText(submission) }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Passed Column -->
+              <ng-container matColumnDef="passed">
+                <th mat-header-cell *matHeaderCellDef>Bewertung</th>
+                <td mat-cell *matCellDef="let submission">
+                  <mat-chip [color]="getPassedStatusColor(submission)" selected>
+                    <mat-icon matChipAvatar>{{ getPassedStatusIcon(submission) }}</mat-icon>
+                    {{ getPassedStatusText(submission) }}
                   </mat-chip>
                 </td>
               </ng-container>
