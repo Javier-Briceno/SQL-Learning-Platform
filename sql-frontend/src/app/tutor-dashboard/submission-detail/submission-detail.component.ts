@@ -13,12 +13,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthService } from '../../auth/auth.service';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 interface SubmissionDetail {
   id: number;
   status: 'DRAFT' | 'SUBMITTED';
+  feedback?: string;
+  passed?: boolean;
   submittedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -48,13 +51,16 @@ interface Task {
 interface Answer {
   id: number;
   content: string;
+  feedback?: string;
+  isCorrect?: boolean;
   taskId: number;
   task: Task;
 }
 
 @Component({
   selector: 'app-submission-detail',
-  standalone: true,  imports: [
+  standalone: true,
+  imports: [
     CommonModule,
     FormsModule,
     MatCardModule,
@@ -67,6 +73,7 @@ interface Answer {
     MatTableModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSlideToggleModule,
     ReactiveFormsModule,
   ],
   templateUrl: './submission-detail.component.html',
@@ -75,15 +82,18 @@ interface Answer {
 export class SubmissionDetailComponent implements OnInit {
   private baseUrl = 'http://localhost:3000/submissions';
   
-  submission: SubmissionDetail | null = null;  submissionDetail: SubmissionDetail | null = null; // Alias für Template
+  submission: SubmissionDetail | null = null;
+  submissionDetail: SubmissionDetail | null = null; // Alias für Template
   submissionId: number | null = null;
   isLoading = false;
   loading = false; // Alias für Template
   error: string | null = null;
   saving = false;
 
-  // Text selection controls for task evaluations
+  // Form controls for task evaluations and passed status
   taskEvaluationControls: { [taskId: number]: FormControl } = {};
+  passedControl = new FormControl(false);
+  overallFeedbackControl = new FormControl('');
 
   constructor(
     private route: ActivatedRoute,
@@ -144,8 +154,12 @@ export class SubmissionDetailComponent implements OnInit {
           this.taskEvaluationControls = {};
           for (const task of submission.worksheet.tasks) {
             const answer = this.getAnswerForTask(task.id);
-            this.taskEvaluationControls[task.id] = new FormControl('');
+            this.taskEvaluationControls[task.id] = new FormControl(answer?.feedback || '');
           }
+          
+          // Initialize overall feedback and passed status
+          this.overallFeedbackControl.setValue(submission.feedback || '');
+          this.passedControl.setValue(submission.passed || false);
         },
         error: (err: HttpErrorResponse) => {
           console.error('Fehler beim Laden der Submission:', err);
@@ -220,11 +234,48 @@ export class SubmissionDetailComponent implements OnInit {
   }
 
   saveEvaluation(): void {
-    // Placeholder für zukünftige Bewertungsfunktionalität
+    if (!this.submissionId || !this.submission) return;
+
     this.saving = true;
-    setTimeout(() => {
-      this.saving = false;
-      this.snackBar.open('Bewertung gespeichert', 'OK', { duration: 2000 });
-    }, 1000);
+    
+    // Prepare feedback data
+    const feedbackData = {
+      submissionFeedback: this.overallFeedbackControl.value,
+      passed: this.passedControl.value,
+      answerFeedback: {} as { [taskId: number]: { feedback: string; isCorrect?: boolean } }
+    };
+
+    // Collect individual task feedback
+    for (const [taskIdStr, control] of Object.entries(this.taskEvaluationControls)) {
+      const taskId = parseInt(taskIdStr);
+      const feedback = control.value;
+      if (feedback) {
+        feedbackData.answerFeedback[taskId] = {
+          feedback: feedback,
+          isCorrect: undefined // You could add isCorrect logic here later
+        };
+      }
+    }
+
+    // Send to backend
+    this.http.put(`${this.baseUrl}/${this.submissionId}/feedback`, feedbackData)
+      .subscribe({
+        next: (response) => {
+          this.saving = false;
+          this.snackBar.open('Bewertung erfolgreich gespeichert', 'OK', { duration: 3000 });
+          
+          // Update local data
+          if (this.submission) {
+            this.submission.feedback = feedbackData.submissionFeedback || undefined;
+            this.submission.passed = feedbackData.passed || undefined;
+            this.submissionDetail = this.submission;
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          this.saving = false;
+          console.error('Fehler beim Speichern der Bewertung:', err);
+          this.snackBar.open('Fehler beim Speichern der Bewertung', 'OK', { duration: 5000 });
+        }
+      });
   }
 }

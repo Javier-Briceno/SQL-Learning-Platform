@@ -21,6 +21,7 @@ import { SubmissionDetailComponent } from './tutor-dashboard/submission-detail/s
 import { DatabaseCreatorComponent } from './tutor-dashboard/database-creator/database-creator.component';
 import { DatabaseSchemaComponent } from './tutor-dashboard/database-schema/database-schema.component';
 import { AufgabenManagmentComponent } from './pages/admin/aufgaben-management/aufgaben-managment.component';
+import { StudentSubmissionDetailComponent } from './student/submission-detail/submission-detail.component';
 
 
 export const routes: Routes = [
@@ -68,6 +69,11 @@ export const routes: Routes = [
   {
     path: 'student/worksheet/:id',
     component: StudentWorksheetComponent,
+    canActivate: [studentGuard]
+  },
+  {
+    path: 'student/submission/:id',
+    component: StudentSubmissionDetailComponent,
     canActivate: [studentGuard]
   },
   { path: '', redirectTo: 'auth/login', pathMatch: 'full' },

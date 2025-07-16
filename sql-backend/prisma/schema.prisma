@@ -50,6 +50,7 @@ model Submission {
   status      String    @default("in_progress")
   grade       Int?
   feedback    String?
+  passed      Boolean?
   submittedAt DateTime?
   gradedAt    DateTime?
   userId      Int

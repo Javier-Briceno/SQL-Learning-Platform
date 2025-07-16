@@ -116,4 +116,43 @@ export class SubmissionsController {
 
     return this.submissionsService.getSubmissionDetails(submissionId, tutorId);
   }
+
+  // Tutor: Feedback für eine Submission speichern
+  @Put(':submissionId/feedback')
+  async saveFeedback(
+    @Param('submissionId', ParseIntPipe) submissionId: number,
+    @Body() feedbackData: {
+      feedback?: string;
+      passed?: boolean;
+      answers?: Array<{
+        id: number;
+        feedback?: string;
+        isCorrect?: boolean;
+      }>;
+    },
+    @Request() req
+  ) {
+    const tutorId = req.user.id;
+    
+    if (req.user.role !== 'TUTOR') {
+      throw new ForbiddenException('Nur Tutoren können Feedback speichern');
+    }
+
+    return this.submissionsService.saveFeedback(submissionId, tutorId, feedbackData);
+  }
+
+  // Student: Eigene Submission mit Feedback anzeigen
+  @Get(':submissionId/student')
+  async getStudentSubmissionDetails(
+    @Param('submissionId', ParseIntPipe) submissionId: number,
+    @Request() req
+  ) {
+    const studentId = req.user.id;
+    
+    if (req.user.role !== 'STUDENT') {
+      throw new ForbiddenException('Nur Studenten können ihre Abgaben einsehen');
+    }
+
+    return this.submissionsService.getStudentSubmissionDetails(submissionId, studentId);
+  }
 }

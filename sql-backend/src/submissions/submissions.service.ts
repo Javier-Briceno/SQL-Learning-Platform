@@ -421,7 +421,8 @@ export class SubmissionsService {
                   id: true,
                   name: true
                 }
-              },              tasks: {
+              },
+              tasks: {
                 select: {
                   id: true,
                   title: true,
@@ -436,7 +437,8 @@ export class SubmissionsService {
             }
           },
           answers: {
-            include: {              task: {
+            include: {
+              task: {
                 select: {
                   id: true,
                   title: true,
@@ -461,7 +463,9 @@ export class SubmissionsService {
       const answersMap = new Map();
       submission.answers.forEach(answer => {
         answersMap.set(answer.taskId, answer);
-      });      // Kombiniere Tasks mit Antworten
+      });
+
+      // Kombiniere Tasks mit Antworten
       const tasksWithAnswers = submission.worksheet.tasks.map(task => ({
         ...task,
         studentAnswer: answersMap.get(task.id)?.content || '',
@@ -480,6 +484,240 @@ export class SubmissionsService {
       return result;
     } catch (error) {
       console.error('Fehler beim Laden der Submission Details:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new BadRequestException('Fehler beim Laden der Abgabe-Details');
+    }
+  }
+
+  // Update feedback for answers and submission
+  async updateSubmissionFeedback(submissionId: number, tutorId: number, feedbackData: {
+    submissionFeedback?: string;
+    passed?: boolean;
+    answerFeedback?: { [taskId: number]: { feedback: string; isCorrect?: boolean } };
+  }) {
+    try {
+      const submission = await this.prisma.submission.findUnique({
+        where: { id: submissionId },
+        include: {
+          worksheet: {
+            select: {
+              tutorId: true
+            }
+          },
+          answers: {
+            select: {
+              id: true,
+              taskId: true
+            }
+          }
+        }
+      });
+
+      if (!submission) {
+        throw new NotFoundException('Abgabe nicht gefunden');
+      }
+
+      // Check if tutor owns this submission
+      if (submission.worksheet.tutorId !== tutorId) {
+        throw new ForbiddenException('Sie können nur Abgaben Ihrer eigenen Übungsblätter bewerten');
+      }
+
+      return await this.prisma.$transaction(async (prisma) => {
+        // Update submission feedback and passed status
+        const updatedSubmission = await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            feedback: feedbackData.submissionFeedback,
+            ...(feedbackData.passed !== undefined && { passed: feedbackData.passed }),
+            gradedAt: new Date()
+          }
+        });
+
+        // Update individual answer feedback
+        if (feedbackData.answerFeedback) {
+          for (const [taskIdStr, feedback] of Object.entries(feedbackData.answerFeedback)) {
+            const taskId = parseInt(taskIdStr);
+            const answer = submission.answers.find(a => a.taskId === taskId);
+            
+            if (answer) {
+              await prisma.answer.update({
+                where: { id: answer.id },
+                data: {
+                  feedback: feedback.feedback,
+                  isCorrect: feedback.isCorrect
+                }
+              });
+            }
+          }
+        }
+
+        return updatedSubmission;
+      });
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Bewertung:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new BadRequestException('Fehler beim Speichern der Bewertung');
+    }
+  }
+
+  // Save feedback for a submission (new method for the feedback system)
+  async saveFeedback(submissionId: number, tutorId: number, feedbackData: {
+    feedback?: string;
+    passed?: boolean;
+    answers?: Array<{
+      id: number;
+      feedback?: string;
+      isCorrect?: boolean;
+    }>;
+  }) {
+    try {
+      const submission = await this.prisma.submission.findUnique({
+        where: { id: submissionId },
+        include: {
+          worksheet: {
+            select: {
+              tutorId: true
+            }
+          },
+          answers: {
+            select: {
+              id: true,
+              taskId: true
+            }
+          }
+        }
+      });
+
+      if (!submission) {
+        throw new NotFoundException('Abgabe nicht gefunden');
+      }
+
+      // Check if tutor owns this submission
+      if (submission.worksheet.tutorId !== tutorId) {
+        throw new ForbiddenException('Sie können nur Abgaben Ihrer eigenen Übungsblätter bewerten');
+      }
+
+      return await this.prisma.$transaction(async (prisma) => {
+        // Update submission feedback and passed status
+        const updatedSubmission = await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            feedback: feedbackData.feedback,
+            ...(feedbackData.passed !== undefined && { passed: feedbackData.passed }),
+            gradedAt: new Date()
+          }
+        });
+
+        // Update individual answer feedback
+        if (feedbackData.answers) {
+          for (const answerFeedback of feedbackData.answers) {
+            await prisma.answer.update({
+              where: { id: answerFeedback.id },
+              data: {
+                feedback: answerFeedback.feedback,
+                isCorrect: answerFeedback.isCorrect
+              }
+            });
+          }
+        }
+
+        return updatedSubmission;
+      });
+    } catch (error) {
+      console.error('Fehler beim Speichern der Bewertung:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new BadRequestException('Fehler beim Speichern der Bewertung');
+    }
+  }
+
+  // Get submission details for student (including feedback)
+  async getStudentSubmissionDetails(submissionId: number, studentId: number) {
+    try {
+      const submission = await this.prisma.submission.findUnique({
+        where: { id: submissionId },
+        include: {
+          worksheet: {
+            include: {
+              tutor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              tasks: {
+                select: {
+                  id: true,
+                  title: true,
+                  description: true,
+                  taskType: true,
+                  orderIndex: true
+                },
+                orderBy: {
+                  orderIndex: 'asc'
+                }
+              }
+            }
+          },
+          answers: {
+            include: {
+              task: {
+                select: {
+                  id: true,
+                  title: true,
+                  taskType: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!submission) {
+        throw new NotFoundException('Abgabe nicht gefunden');
+      }
+
+      // Check if student owns this submission
+      if (submission.studentId !== studentId) {
+        throw new ForbiddenException('Sie können nur Ihre eigenen Abgaben einsehen');
+      }
+
+      // Erstelle Map der Antworten
+      const answersMap = new Map();
+      submission.answers.forEach(answer => {
+        answersMap.set(answer.taskId, answer);
+      });
+
+      // Kombiniere Tasks mit Antworten und Feedback
+      const tasksWithAnswers = submission.worksheet.tasks.map(task => {
+        const answer = answersMap.get(task.id);
+        return {
+          ...task,
+          studentAnswer: answer?.content || '',
+          hasAnswer: !!answer,
+          feedback: answer?.feedback || null,
+          isCorrect: answer?.isCorrect || null
+        };
+      });
+
+      const result = {
+        ...submission,
+        worksheet: {
+          ...submission.worksheet,
+          tasks: tasksWithAnswers
+        }
+      };
+
+      console.log(`Submission Details ${submissionId} für Student ${studentId} geladen`);
+      return result;
+    } catch (error) {
+      console.error('Fehler beim Laden der Submission Details für Student:', error);
       if (error instanceof NotFoundException || error instanceof ForbiddenException) {
         throw error;
       }

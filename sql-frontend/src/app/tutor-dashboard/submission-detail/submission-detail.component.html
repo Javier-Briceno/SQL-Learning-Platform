@@ -103,17 +103,60 @@
             <div class="evaluation-section">
               <h4>Bewertung:</h4>
               <mat-form-field appearance="outline" class="evaluation-field">
-                <mat-label>Bewertung/Kommentar</mat-label>
+                <mat-label>Feedback für diese Aufgabe</mat-label>
                 <textarea
                   matInput
                   [formControl]="taskEvaluationControls[task.id]"
-                  placeholder="Hier könnten Bewertungen eingegeben werden..."
+                  placeholder="Feedback für diese Aufgabe eingeben..."
                   rows="3">
                 </textarea>
               </mat-form-field>
+              
+              <!-- Pass/Fail Toggle per Task (optional for future enhancement) -->
+              <div class="task-status-toggle">
+                <mat-slide-toggle
+                  [disabled]="saving"
+                  color="primary">
+                  Aufgabe bestanden
+                </mat-slide-toggle>
+              </div>
             </div>
 
             <mat-divider *ngIf="i < submissionDetail.worksheet.tasks.length - 1"></mat-divider>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Overall Feedback Section -->
+    <mat-card class="feedback-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>feedback</mat-icon>
+        <mat-card-title>Gesamtbewertung</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="overall-feedback-section">
+          <mat-form-field appearance="outline" class="overall-feedback-field">
+            <mat-label>Gesamtfeedback für die Abgabe</mat-label>
+            <textarea
+              matInput
+              [formControl]="overallFeedbackControl"
+              placeholder="Allgemeines Feedback zur gesamten Abgabe..."
+              rows="4">
+            </textarea>
+          </mat-form-field>
+          
+          <div class="passed-toggle-section">
+            <mat-slide-toggle
+              [formControl]="passedControl"
+              [disabled]="saving"
+              color="primary"
+              class="passed-toggle">
+              <span class="toggle-label">Abgabe bestanden</span>
+            </mat-slide-toggle>
+            <div class="toggle-description">
+              <small>Markieren Sie, ob der Student die Abgabe erfolgreich bestanden hat</small>
+            </div>
           </div>
         </div>
       </mat-card-content>

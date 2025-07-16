@@ -9,22 +9,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px;
-  
-  mat-spinner {
-    margin-bottom: 16px;
-  }
+  padding: 64px 16px;
   
   p {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.6);
+    margin-top: 16px;
+    color: #666;
+    font-size: 1rem;
   }
 }
 
 .error-container {
-  padding: 24px;
+  display: flex;
+  justify-content: center;
+  padding: 64px 16px;
   
   .error-card {
+    max-width: 400px;
     text-align: center;
     
     mat-card-content {
@@ -34,14 +34,14 @@
       gap: 16px;
       
       mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
+        font-size: 3rem;
+        width: 3rem;
+        height: 3rem;
       }
       
       h3 {
         margin: 0;
-        color: #d32f2f;
+        color: rgba(0, 0, 0, 0.87);
       }
       
       p {
@@ -81,7 +81,7 @@
         gap: 8px;
         color: rgba(0, 0, 0, 0.6);
         
-        .student-name {
+        .worksheet-title {
           font-weight: 500;
         }
         
@@ -89,7 +89,7 @@
           color: rgba(0, 0, 0, 0.4);
         }
         
-        .worksheet-title {
+        .tutor-name {
           font-style: italic;
         }
       }
@@ -100,7 +100,7 @@
     }
   }
   
-  .student-info-card {
+  .submission-info-card {
     margin-bottom: 24px;
     
     .info-grid {
@@ -127,7 +127,23 @@
     }
   }
   
-  .answers-card {
+  .overall-feedback-card {
+    margin-bottom: 24px;
+    
+    .feedback-content {
+      p {
+        margin: 0;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #1976d2;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+    }
+  }
+  
+  .tasks-card {
     margin-bottom: 24px;
     
     .tasks-container {
@@ -189,9 +205,9 @@
           }
         }
         
-        .evaluation-section {
+        .feedback-section {
           h4 {
-            margin: 0 0 8px 0;
+            margin: 0 0 12px 0;
             font-size: 14px;
             font-weight: 500;
             color: rgba(0, 0, 0, 0.6);
@@ -199,21 +215,26 @@
             letter-spacing: 0.5px;
           }
           
-          .evaluation-field {
-            width: 100%;
-            margin-bottom: 16px;
-            
-            textarea {
-              font-family: inherit;
-              resize: vertical;
-              min-height: 80px;
+          .correctness-indicator {
+            margin-bottom: 12px;
+          }
+          
+          .feedback-text {
+            p {
+              margin: 0;
+              padding: 12px;
+              background: #e3f2fd;
+              border-radius: 4px;
+              border-left: 4px solid #2196f3;
+              line-height: 1.6;
+              white-space: pre-wrap;
             }
           }
           
-          .task-status-toggle {
-            margin-top: 8px;
-            
-            mat-slide-toggle {
+          .no-feedback {
+            .no-feedback-text {
+              color: rgba(0, 0, 0, 0.4);
+              font-style: italic;
               font-size: 14px;
             }
           }
@@ -221,47 +242,6 @@
         
         mat-divider {
           margin: 24px 0;
-        }
-      }
-    }
-  }
-  
-  .feedback-card {
-    margin-bottom: 24px;
-    
-    .overall-feedback-section {
-      .overall-feedback-field {
-        width: 100%;
-        margin-bottom: 24px;
-        
-        textarea {
-          font-family: inherit;
-          resize: vertical;
-          min-height: 120px;
-        }
-      }
-      
-      .passed-toggle-section {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        
-        .passed-toggle {
-          font-size: 16px;
-          font-weight: 500;
-          
-          .toggle-label {
-            margin-left: 8px;
-          }
-        }
-        
-        .toggle-description {
-          margin-left: 44px;
-          
-          small {
-            color: rgba(0, 0, 0, 0.6);
-            font-size: 12px;
-          }
         }
       }
     }
@@ -314,7 +294,7 @@
       }
     }
     
-    .student-info-card .info-grid {
+    .submission-info-card .info-grid {
       grid-template-columns: 1fr;
     }
     
@@ -324,26 +304,6 @@
       button {
         width: 100%;
       }
-    }
-  }
-}
-
-// Status Colors
-::ng-deep {
-  .mat-mdc-chip {
-    &.mat-primary {
-      --mdc-chip-elevated-container-color: #e3f2fd;
-      --mdc-chip-label-text-color: #1976d2;
-    }
-    
-    &.mat-accent {
-      --mdc-chip-elevated-container-color: #e8f5e8;
-      --mdc-chip-label-text-color: #2e7d32;
-    }
-    
-    &.mat-warn {
-      --mdc-chip-elevated-container-color: #fff3e0;
-      --mdc-chip-label-text-color: #f57c00;
     }
   }
 }

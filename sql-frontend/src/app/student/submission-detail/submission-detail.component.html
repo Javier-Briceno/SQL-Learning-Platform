@@ -1,0 +1,175 @@
+<!-- Student Submission Detail View -->
+<div class="submission-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Lade Abgabe...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <h3>Fehler beim Laden</h3>
+        <p>{{ error }}</p>
+        <button mat-raised-button color="primary" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Zurück zur Übersicht
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Submission Detail Content -->
+  <div *ngIf="!loading && !error && submission" class="submission-content">
+    <!-- Header -->
+    <div class="header-section">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-info">
+        <h1>Meine Abgabe</h1>
+        <div class="meta-info">
+          <span class="worksheet-title">{{ submission.worksheet.title }}</span>
+          <span class="separator">•</span>
+          <span class="tutor-name">{{ submission.worksheet.tutor.name }}</span>
+        </div>
+      </div>
+      <div class="status-badge">
+        <mat-chip [color]="getStatusColor(submission.status)" selected>
+          {{ getStatusText(submission.status) }}
+        </mat-chip>
+      </div>
+    </div>
+
+    <!-- Submission Information -->
+    <mat-card class="submission-info-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>info</mat-icon>
+        <mat-card-title>Abgabe Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Übungsblatt:</strong>
+            <span>{{ submission.worksheet.title }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Tutor:</strong>
+            <span>{{ submission.worksheet.tutor.name }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Status:</strong>
+            <mat-chip [color]="getStatusColor(submission.status)" selected>
+              {{ getStatusText(submission.status) }}
+            </mat-chip>
+          </div>
+          <div class="info-item" *ngIf="submission.submittedAt">
+            <strong>Abgegeben am:</strong>
+            <span>{{ formatDate(submission.submittedAt) }}</span>
+          </div>
+          <div class="info-item" *ngIf="submission.gradedAt">
+            <strong>Bewertet am:</strong>
+            <span>{{ formatDate(submission.gradedAt) }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Bewertung:</strong>
+            <mat-chip [color]="getPassedStatusColor()" selected>
+              <mat-icon matChipAvatar>{{ getPassedStatusIcon() }}</mat-icon>
+              {{ getPassedStatusText() }}
+            </mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Overall Feedback -->
+    <mat-card *ngIf="submission.feedback" class="overall-feedback-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>feedback</mat-icon>
+        <mat-card-title>Gesamtfeedback</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="feedback-content">
+          <p>{{ submission.feedback }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tasks and Answers with Feedback -->
+    <mat-card class="tasks-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>assignment</mat-icon>
+        <mat-card-title>Aufgaben und Feedback</mat-card-title>
+        <mat-card-subtitle>{{ submission.worksheet.title }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tasks-container">
+          <div *ngFor="let task of submission.worksheet.tasks; let i = index" class="task-item">
+            
+            <!-- Task Question -->
+            <div class="task-question">
+              <h3>Aufgabe {{ i + 1 }}: {{ task.title }}</h3>
+              <p [innerHTML]="task.description"></p>
+            </div>
+
+            <!-- Student Answer -->
+            <div class="student-answer">
+              <h4>Ihre Antwort:</h4>
+              <div class="answer-content">
+                <ng-container *ngIf="task.hasAnswer; else noAnswer">
+                  <pre>{{ task.studentAnswer }}</pre>
+                </ng-container>
+                <ng-template #noAnswer>
+                  <span class="no-answer">Keine Antwort eingegeben</span>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- Feedback Section -->
+            <div class="feedback-section" *ngIf="task.feedback || task.isCorrect !== null">
+              <h4>Feedback:</h4>
+              
+              <!-- Correctness Indicator -->
+              <div class="correctness-indicator" *ngIf="task.isCorrect !== null">
+                <mat-chip [color]="getTaskFeedbackColor(task)" selected>
+                  <mat-icon matChipAvatar>{{ getTaskFeedbackIcon(task) }}</mat-icon>
+                  {{ task.isCorrect ? 'Richtig' : 'Nicht richtig' }}
+                </mat-chip>
+              </div>
+              
+              <!-- Feedback Text -->
+              <div class="feedback-text" *ngIf="task.feedback">
+                <p>{{ task.feedback }}</p>
+              </div>
+              
+              <!-- No Feedback Yet -->
+              <div class="no-feedback" *ngIf="!task.feedback && task.isCorrect === null">
+                <span class="no-feedback-text">Noch kein Feedback verfügbar</span>
+              </div>
+            </div>
+
+            <mat-divider *ngIf="i < submission.worksheet.tasks.length - 1"></mat-divider>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button 
+        *ngIf="submission.status === 'DRAFT'" 
+        mat-raised-button 
+        color="primary" 
+        (click)="editSubmission()">
+        <mat-icon>edit</mat-icon>
+        Weiter bearbeiten
+      </button>
+      <button mat-stroked-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Zurück zur Übersicht
+      </button>
+    </div>
+  </div>
+</div>

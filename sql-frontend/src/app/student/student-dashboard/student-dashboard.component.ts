@@ -171,7 +171,7 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   viewSubmission(submission: StudentSubmission): void {
-  this.router.navigate(['/student/worksheet', submission.worksheet.id]);
+    this.router.navigate(['/student/submission', submission.id]);
   }
 
   onTabChange(index: number): void {
