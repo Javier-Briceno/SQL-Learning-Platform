@@ -206,7 +206,7 @@ export class StudentSubmissionDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/student/dashboard']);
+    this.router.navigate(['/student']);
   }
 
   editSubmission(): void {
