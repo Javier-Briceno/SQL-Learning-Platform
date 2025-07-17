@@ -1,7 +1,7 @@
 // Worksheet Overview Styles
 
 .worksheet-toolbar {
-  background-color: #2963a5;
+  background-color: #6c757d;
   color: white;
   margin-bottom: 20px;
 
@@ -15,6 +15,17 @@
 
   .spacer {
     flex: 1 1 auto;
+  }
+
+  // Pink button styling for toolbar button
+  button {
+    background-color: #e91e63 !important;
+    color: white !important;
+    border: none !important;
+    
+    &:hover {
+      background-color: #c2185b !important;
+    }
   }
 }
 
@@ -85,6 +96,13 @@
   .empty-action-button {
     margin-top: 8px;
     padding: 12px 24px;
+    background-color: #e91e63 !important;
+    color: white !important;
+    border: none !important;
+    
+    &:hover {
+      background-color: #c2185b !important;
+    }
     
     mat-icon {
       margin-right: 8px;
@@ -114,7 +132,7 @@
   }
 
   .worksheet-avatar {
-    background-color: #356ba1;
+    background-color: #3067a2;
     color: white;
     display: flex;
     align-items: center;
@@ -175,6 +193,7 @@
     margin-bottom: 16px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -252,6 +271,12 @@
   bottom: 24px;
   right: 24px;
   z-index: 1000;
+  background-color: #e91e63 !important;
+  color: white !important;
+
+  &:hover {
+    background-color: #c2185b !important;
+  }
 
   @media (min-width: 769px) {
     display: none; // Verstecke FAB auf Desktop
