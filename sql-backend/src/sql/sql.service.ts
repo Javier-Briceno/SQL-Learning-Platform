@@ -965,4 +965,126 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
       await client.end();
     }
   }
+  
+  async evaluateAnswerWithAI(aufgabe: string, antwort: string, dbName: string): Promise<{ feedback: string; korrekt: boolean }> {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new InternalServerErrorException('OPENAI_API_KEY nicht gesetzt.');
+    }
+
+    const schema = await this.inspectDatabase(dbName);
+    const schemaString = JSON.stringify(schema, null, 2);
+
+
+    const prompt = `
+      Aufgabe:
+      ${aufgabe}
+
+      Antwort des Studenten:
+      ${antwort}
+
+      Datenbankschema:
+      ${schemaString}
+
+      Du bist ein Tutor und gibst dem Studenten direkt Feedback zu seiner Antwort. 
+      Sprich den Studenten direkt an ("du", "deine Antwort"). Bewerte die Antwort in Bezug auf die Aufgabe und das Datenbankschema. 
+      Gib ein präzises Feedback in 2–3 Sätzen. Schreibe am Ende **nur** "KORREKT" oder "NICHT KORREKT" auf einer eigenen Zeile.
+        `;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1',
+          messages: [
+            { role: 'system', content: 'Du bist ein Tutor für Datenbanksysteme.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 500,
+          temperature: 0
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API Fehler: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const feedback = data.choices[0].message.content.trim();
+
+      const korrekt = feedback.toUpperCase().includes('KORREKT') &&
+                    !feedback.toUpperCase().includes('NICHT KORREKT');
+
+      return { feedback, korrekt };
+    } catch (error) {
+      console.error('Fehler bei OpenAI Anfrage:', error);
+      throw new InternalServerErrorException('KI-Auswertung fehlgeschlagen.');
+    }
+  }
+  
+  async evaluateSubmissionWithAI(aufgaben: {
+    aufgabe: string;
+    antwort: string;
+    feedback: string;
+    bestanden: boolean;
+  }[]): Promise<{ feedback: string }> {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new InternalServerErrorException('OPENAI_API_KEY nicht gesetzt.');
+    }
+
+    const zusammenfassung = aufgaben.map((a, i) => {
+      return `Aufgabe ${i + 1}:
+  Aufgabe: ${a.aufgabe}
+  Antwort: ${a.antwort}
+  Feedback: ${a.feedback}
+  Status: ${a.bestanden ? 'bestanden' : 'nicht bestanden'}`;
+    }).join('\n\n---\n\n');
+
+    const prompt = `
+  Du bist ein Tutor für Datenbanksysteme. Basierend auf den untenstehenden Aufgaben und ihrem Feedback sollst du ein präzises, motivierendes Gesamtfeedback an den Studenten schreiben. Sprich den Studenten direkt an ("du", "deine Abgabe").
+
+  Am Ende schreibe NUR "BESTANDEN" oder "NICHT BESTANDEN" auf einer eigenen Zeile.
+
+  ${zusammenfassung}
+  `;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1',
+          messages: [
+            { role: 'system', content: 'Du bist ein Tutor für SQL und Datenbanksysteme.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 500,
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API Fehler: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const feedback = data.choices[0].message.content.trim();
+
+      return { feedback };
+    } catch (error) {
+      console.error('Fehler bei Gesamtbewertung KI:', error);
+      throw new InternalServerErrorException('KI-Auswertung für Gesamtbewertung fehlgeschlagen.');
+    }
+  }
+
+
+
 }

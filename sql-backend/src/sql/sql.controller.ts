@@ -108,6 +108,26 @@ async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: bool
       return { task: '', aiAnswer: 'Fehler bei der KI-Aufgabenerstellung.' };
     }
   }
+
+  @Post('evaluate-answer')
+  async evaluateAnswerWithAI(@Body() body: { aufgabe: string; antwort: string; dbName: string }): Promise<{ feedback: string; korrekt: boolean }> {
+    return this.sqlService.evaluateAnswerWithAI(body.aufgabe, body.antwort, body.dbName);
+  }
+
+  @Post('evaluate-submission')
+  async evaluateSubmissionWithAI(
+    @Body() body: {
+      aufgaben: {
+        aufgabe: string;
+        antwort: string;
+        feedback: string;
+        bestanden: boolean;
+      }[];
+    }
+  ) {
+    return this.sqlService.evaluateSubmissionWithAI(body.aufgaben);
+  }
+
 }
 
 

@@ -123,6 +123,14 @@
               </div>
             </div>
 
+            <button mat-raised-button color="primary"
+                    (click)="bewerteAufgabeMitKI(task)"
+                    [disabled]="saving"
+                    class="evaluate-button"
+                    style="position: absolute; bottom: 16px; right: 16px;">
+              Mit KI bewerten
+            </button>
+
             <mat-divider *ngIf="i < submissionDetail.worksheet.tasks.length - 1"></mat-divider>
           </div>
         </div>
@@ -159,6 +167,13 @@
               <small>Markieren Sie, ob der Student die Abgabe erfolgreich bestanden hat</small>
             </div>
           </div>
+
+          <button mat-raised-button color="accent"
+                  (click)="bewerteGesamtbewertungMitKI()"
+                  [disabled]="!alleAufgabenBewertet() || saving"
+                  style="position: absolute; bottom: 16px; right: 16px;">
+            Mit KI bewerten
+          </button>
         </div>
       </mat-card-content>
     </mat-card>

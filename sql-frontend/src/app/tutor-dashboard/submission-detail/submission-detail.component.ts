@@ -290,4 +290,101 @@ export class SubmissionDetailComponent implements OnInit {
         }
       });
   }
+
+  async bewerteAufgabeMitKI(task: Task): Promise<void> {
+    if (!this.submissionDetail) return;
+
+    this.saving = true;
+
+    const aufgabe = this.stripHtml(task.description);
+    const antwort = this.getAnswerForTask(task.id)?.content ?? '';
+    const dbName = this.submissionDetail.worksheet.database;
+
+    try {
+      const result = await this.http.post<{ feedback: string; korrekt: boolean }>(
+        'http://localhost:3000/sql/evaluate-answer',
+        { aufgabe, antwort, dbName }
+      ).toPromise();
+
+      if (result) {
+        this.taskEvaluationControls[task.id].setValue(result.feedback);
+        this.taskPassedControls[task.id].setValue(result.korrekt);
+      } else {
+        throw new Error('Leere Antwort von der KI');
+      }
+
+      this.snackBar.open(`Aufgabe ${task.title} bewertet`, 'OK', { duration: 2000 });
+    } catch (error) {
+      console.error(`Fehler bei Aufgabe ${task.id}:`, error);
+      this.taskEvaluationControls[task.id].setValue('⚠️ Fehler bei der KI-Auswertung.');
+      this.taskPassedControls[task.id].setValue(false);
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  antwortPruefen(aufgabe: string, antwort: string): boolean {
+    // Simple heuristische Prüfung (z.B. SQL-Keywords)
+    const expectedKeywords = ['select', 'from', 'join', 'where'];
+
+    const normalizedAnswer = antwort.toLowerCase();
+    return expectedKeywords.some(keyword => normalizedAnswer.includes(keyword));
+  }
+
+  stripHtml(html: string): string {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  async bewerteGesamtbewertungMitKI(): Promise<void> {
+    if (!this.submissionDetail) return;
+
+    const aufgabenData = this.submissionDetail.worksheet.tasks.map(task => {
+      const aufgabe = this.stripHtml(task.description);
+      const antwort = this.getAnswerForTask(task.id)?.content ?? '';
+      const feedback = this.taskEvaluationControls[task.id].value ?? '';
+      const bestanden = this.taskPassedControls[task.id].value ?? false;
+
+      return { aufgabe, antwort, feedback, bestanden };
+    });
+
+    const alleBewertet = aufgabenData.every(entry => entry.feedback.trim().length > 0);
+    if (!alleBewertet) {
+      this.snackBar.open('Bitte bewerte zuerst alle Aufgaben mit KI.', 'OK', { duration: 3000 });
+      return;
+    }
+
+    this.saving = true;
+
+    try {
+      const result = await this.http.post<{ feedback: string }>(
+        'http://localhost:3000/sql/evaluate-submission',
+        { aufgaben: aufgabenData }
+      ).toPromise();
+
+      const fullFeedback = result?.feedback ?? '';
+      const passed = fullFeedback.toUpperCase().includes('BESTANDEN') &&
+                    !fullFeedback.toUpperCase().includes('NICHT BESTANDEN');
+
+      this.overallFeedbackControl.setValue(fullFeedback);
+      this.passedControl.setValue(passed);
+
+      this.snackBar.open('Gesamtfeedback erfolgreich generiert.', 'OK', { duration: 3000 });
+    } catch (error) {
+      console.error('Fehler bei KI-Auswertung der Gesamtbewertung:', error);
+      this.overallFeedbackControl.setValue('⚠️ Fehler bei der KI-Auswertung.');
+      this.passedControl.setValue(false);
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  alleAufgabenBewertet(): boolean {
+    return this.submissionDetail?.worksheet.tasks.every(task => {
+      const value = this.taskEvaluationControls[task.id]?.value;
+      return value && value.trim().length > 0;
+    }) ?? false;
+  }
+
 }
