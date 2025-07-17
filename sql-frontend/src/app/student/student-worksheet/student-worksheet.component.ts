@@ -508,7 +508,8 @@ export class StudentWorksheetComponent implements OnInit {
     const selectedTask = this.worksheet.tasks[this.selectedTaskIndex]; // <--- NEU
     const body = {
       taskDescription: selectedTask?.description || '',
-      sqlQuery: this.sqlForm.get('query')?.value
+      sqlQuery: this.sqlForm.get('query')?.value,
+      dbName: this.worksheet.database
     };
     this.http.post<{ matches: boolean, aiAnswer: string }>('http://localhost:3000/sql/check-query-matches-task', body)
       .subscribe({

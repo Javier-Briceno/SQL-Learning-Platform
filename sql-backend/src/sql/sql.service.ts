@@ -330,17 +330,28 @@ export class SqlService {
         }
     }
 
-    async checkQueryMatchesTask(taskDescription: string, sqlQuery: string): Promise<{ matches: boolean, aiAnswer: string }> {
+    async checkQueryMatchesTask(
+    taskDescription: string,
+    sqlQuery: string,
+    dbName: string
+): Promise<{ matches: boolean, aiAnswer: string }> {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
         throw new InternalServerErrorException('OPENAI_API_KEY nicht gesetzt.');
     }
 
+    // Hole das Schema der Datenbank
+    const schema = await this.inspectDatabase(dbName);
+
+    // Schema als String für den Prompt
+    const schemaString = JSON.stringify(schema, null, 2);
+
     const prompt = `
-    Aufgabenstellung: ${taskDescription}
-    SQL-Query: ${sqlQuery}
-    Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann gib eine kurze Begründung (1-2 Sätze), warum die Query (nicht) passt.
-    `;
+Aufgabenstellung: ${taskDescription}
+SQL-Query: ${sqlQuery}
+Datenbankschema: ${schemaString}
+Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann gib eine kurze Begründung (1-2 Sätze), warum die Query (nicht) passt. Achte besonders auf die Verwendung der richtigen Tabellen- und Spaltennamen.
+`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -355,7 +366,7 @@ export class SqlService {
                     { role: 'system', content: 'Du bist ein SQL-Experte und bewertest, ob eine SQL-Query eine Aufgabenstellung korrekt löst.' },
                     { role: 'user', content: prompt }
                 ],
-                max_tokens: 200,
+                max_tokens: 300,
                 temperature: 0
             })
         });

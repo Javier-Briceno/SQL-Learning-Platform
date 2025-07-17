@@ -60,12 +60,16 @@ export class SqlController {
 }
 
   @Post('check-query-matches-task')
-  async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: boolean, aiAnswer: string }> {
+async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: boolean, aiAnswer: string }> {
   try {
-    if (!dto.taskDescription || !dto.sqlQuery) {
+    if (!dto.taskDescription || !dto.sqlQuery || !dto.dbName) {
       return { matches: false, aiAnswer: 'Fehlende Eingaben.' };
     }
-    const { matches, aiAnswer } = await this.sqlService.checkQueryMatchesTask(dto.taskDescription, dto.sqlQuery);
+    const { matches, aiAnswer } = await this.sqlService.checkQueryMatchesTask(
+      dto.taskDescription,
+      dto.sqlQuery,
+      dto.dbName
+    );
     return { matches, aiAnswer };
   } catch (error) {
     return { matches: false, aiAnswer: 'Fehler bei der KI-Überprüfung.' };

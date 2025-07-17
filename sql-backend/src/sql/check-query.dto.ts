@@ -8,4 +8,8 @@ export class CheckQueryDto {
   @IsString()
   @IsNotEmpty()
   sqlQuery: string;
+
+  @IsString()
+  @IsNotEmpty()
+  dbName: string;
 }
