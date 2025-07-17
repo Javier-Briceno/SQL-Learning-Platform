@@ -5,8 +5,8 @@ import { Multer } from 'multer';
 import { CheckQueryDto } from './check-query.dto';
 import { GenerateTaskDto } from './generate-task.dto';
 import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
-import { ExecuteManipulationDto, ManipulationResult, DatabaseCopyInfo } from './manipulation-types.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { ExecuteManipulationDto, ManipulationResult, DatabaseCopyInfo } from './manipulation-types.dto';
 
 // DTOs für Query Execution
 interface QueryExecuteDto {

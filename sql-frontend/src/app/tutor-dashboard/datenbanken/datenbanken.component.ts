@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { DatabaseContentDialogComponent } from './database-content-dialog.component';
+import { DatabaseSchemaDialogComponent } from './database-schema-dialog.component';
 
 @Component({
   selector: 'app-datenbanken',
@@ -88,9 +89,24 @@ export class DatenbankenComponent {
     });
 }
 
-  // Neue Methode für Schema-Anzeige
+  // Neue Methode für vereinfachte Schema-Anzeige
   onShowSchema(dbName: string): void {
-    this.router.navigate(['/tutor-dashboard/database-schema', dbName]);
+    this.isLoading = true;
+    this.http.get<any[]>(`${this.baseUrl}/inspect-schema/${dbName}`)
+      .subscribe({
+        next: (schema) => {
+          this.isLoading = false;
+          this.dialog.open(DatabaseSchemaDialogComponent, {
+            width: '90vw',
+            maxHeight: '80vh',
+            data: { dbName, schema }
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          this.errorMsg = err.error?.message || err.message || 'Fehler beim Laden des Datenbankschemas.';
+          this.isLoading = false;
+        }
+      });
   }
 
   closeDbContent(): void {

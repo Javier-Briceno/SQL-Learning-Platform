@@ -152,10 +152,16 @@
           <mat-icon>storage</mat-icon>
           SQL Executor
         </h2>
-        <button mat-stroked-button color="primary" (click)="showDatabaseContent()">
-          <mat-icon>table_view</mat-icon>
-          Datenbank anzeigen
-        </button>
+        <div class="database-buttons">
+          <button mat-stroked-button color="primary" (click)="showDatabaseSchema()">
+            <mat-icon>schema</mat-icon>
+            Schema anzeigen
+          </button>
+          <button mat-stroked-button color="accent" (click)="showDatabaseContent()">
+            <mat-icon>table_view</mat-icon>
+            Datenbank-Inhalt
+          </button>
+        </div>
       </div>
       
       <mat-card class="sql-executor-card">

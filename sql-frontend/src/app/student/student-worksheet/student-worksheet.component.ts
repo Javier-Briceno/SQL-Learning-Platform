@@ -21,6 +21,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfirmSubmitDialogComponent } from './confirm-submit-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
 import { DatabaseContentDialogComponent } from '../../tutor-dashboard/datenbanken/database-content-dialog.component';
+import { DatabaseSchemaDialogComponent } from '../../tutor-dashboard/datenbanken/database-schema-dialog.component';
 
 interface Task {
   id: number;
@@ -507,6 +508,27 @@ export class StudentWorksheetComponent implements OnInit {
     }
   });
 }
+
+  // Neue Methode für vereinfachte Schema-Ansicht
+  showDatabaseSchema() {
+    if (!this.worksheet) return;
+    const dbName = this.worksheet.database;
+    this.http.get<any>(`http://localhost:3000/sql/inspect-schema/${dbName}`).subscribe({
+      next: (schema) => {
+        this.dialog.open(DatabaseSchemaDialogComponent, {
+          data: {
+            dbName,
+            schema
+          },
+          width: '900px',
+          maxHeight: '80vh'
+        });
+      },
+      error: (err) => {
+        this.snackBar.open('Fehler beim Laden des Datenbankschemas', 'OK', { duration: 3000 });
+      }
+    });
+  }
 
   // ===== NEUE METHODEN FÜR ERWEITERTE SQL-FUNKTIONALITÄT =====
 

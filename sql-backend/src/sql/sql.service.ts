@@ -419,6 +419,88 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
     await client.end();
   }
 }
+
+    // Neue vereinfachte Methode für Schema-Visualisierung (nur Tabellen und Spalten mit Typen)
+    async inspectDatabaseSchema(dbName: string): Promise<any[]> {
+      const client = await this.getDatabaseClient(dbName);
+      try {
+        // Alle Tabellennamen holen
+        const tablesRes = await client.query(`
+          SELECT table_name FROM information_schema.tables
+          WHERE table_schema = 'public'
+          ORDER BY table_name
+        `);
+        const tables = tablesRes.rows.map(r => r.table_name);
+
+        const result: any[] = [];
+        for (const table of tables) {
+          // Spaltennamen mit Datentypen holen (ohne Constraints, Indexes, Beispieldaten)
+          const columnsRes = await client.query(`
+            SELECT 
+              column_name,
+              data_type,
+              is_nullable,
+              character_maximum_length,
+              numeric_precision,
+              numeric_scale
+            FROM information_schema.columns
+            WHERE table_name = $1 AND table_schema = 'public'
+            ORDER BY ordinal_position
+          `, [table]);
+
+          const columns = columnsRes.rows.map(col => ({
+            name: col.column_name,
+            type: this.formatSimpleDataType(col.data_type, col.character_maximum_length, col.numeric_precision, col.numeric_scale),
+            nullable: col.is_nullable === 'YES'
+          }));
+
+          result.push({
+            name: table,
+            columns: columns
+          });
+        }
+        return result;
+      } finally {
+        await client.end();
+      }
+    }
+
+    // Hilfsmethode zur vereinfachten Darstellung von Datentypen
+    private formatSimpleDataType(dataType: string, maxLength?: number, precision?: number, scale?: number): string {
+      switch (dataType) {
+        case 'character varying':
+          return maxLength ? `VARCHAR(${maxLength})` : 'VARCHAR';
+        case 'character':
+          return maxLength ? `CHAR(${maxLength})` : 'CHAR';
+        case 'numeric':
+          if (precision && scale) {
+            return `NUMERIC(${precision},${scale})`;
+          } else if (precision) {
+            return `NUMERIC(${precision})`;
+          }
+          return 'NUMERIC';
+        case 'integer':
+          return 'INTEGER';
+        case 'bigint':
+          return 'BIGINT';
+        case 'smallint':
+          return 'SMALLINT';
+        case 'boolean':
+          return 'BOOLEAN';
+        case 'date':
+          return 'DATE';
+        case 'timestamp without time zone':
+          return 'TIMESTAMP';
+        case 'timestamp with time zone':
+          return 'TIMESTAMPTZ';
+        case 'time without time zone':
+          return 'TIME';
+        case 'text':
+          return 'TEXT';
+        default:
+          return dataType.toUpperCase();
+      }
+    }
     // Extrahiert die SQL-Query aus der generierten Aufgabenbeschreibung
     private extractSqlQuery(taskDescription: string): string {
         const sqlRegex = /```sql\n([\s\S]*?)\n```/;
@@ -966,7 +1048,6 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
       await client.end();
     }
   }
-<<<<<<< Updated upstream
   
   async evaluateAnswerWithAI(aufgabe: string, antwort: string, dbName: string): Promise<{ feedback: string; korrekt: boolean }> {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -1088,8 +1169,6 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
   }
 
 
-
-=======
 
   // ===== NEUE METHODEN FÜR DATENBANKMANIPULATION =====
 
@@ -1428,5 +1507,4 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
       message: `${deletedCount} abgelaufene Datenbank-Kopien wurden aufgeräumt.`
     };
   }
->>>>>>> Stashed changes
 }
