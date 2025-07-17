@@ -15,6 +15,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfirmSubmitDialogComponent } from './confirm-submit-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
 import { DatabaseContentDialogComponent } from '../../tutor-dashboard/datenbanken/database-content-dialog.component';
@@ -51,16 +54,31 @@ interface WorksheetForSubmission {
   canEdit: boolean;
 }
 
-interface QueryResult {
-  columns: string[];
-  rows: any[];
-  rowCount: number;
-  executionTime?: number;
-}
-
-interface QueryRequest {
+interface ManipulationRequest {
   query: string;
   database: string;
+  resetDatabase?: boolean;
+}
+
+interface ManipulationResult {
+  success: boolean;
+  message: string;
+  affectedRows: number;
+  executionTime: number;
+  queryType: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'ALTER' | 'DROP';
+  resetPerformed: boolean;
+  // Für SELECT-Queries: Daten zurückgeben
+  columns?: string[];
+  rows?: any[];
+}
+
+interface DatabaseCopyInfo {
+  originalDatabase: string;
+  copyDatabase: string;
+  userId: number;
+  createdAt: string;
+  lastUsed: string | null;
+  expiresAt: string;
 }
 
 interface SubmissionAnswer {
@@ -95,6 +113,9 @@ interface CheckQueryResult {
     MatStepperModule,
     MatDialogModule,
     MatTableModule,
+    MatCheckboxModule,
+    MatExpansionModule,
+    MatTooltipModule,
     MatSelectModule,
     FormsModule
   ],
@@ -106,7 +127,7 @@ export class StudentWorksheetComponent implements OnInit {
   private sqlBaseUrl = 'http://localhost:3000/sql';
 
   worksheetForm!: FormGroup;
-  sqlForm!: FormGroup;
+  manipulationForm!: FormGroup;
   worksheet: WorksheetForSubmission | null = null;
   worksheetId: number | null = null;
   
@@ -119,9 +140,13 @@ export class StudentWorksheetComponent implements OnInit {
   autoSaveInterval: any;
 
   // SQL Executor State
-  isExecutingSql = false;
-  sqlResult: QueryResult | null = null;
-  sqlError: string | null = null;
+  isExecutingManipulation = false;
+  manipulationResult: ManipulationResult | null = null;
+  manipulationError: string | null = null;
+  
+  // Database Copy Info
+  databaseCopyInfo: DatabaseCopyInfo | null = null;
+  isLoadingCopyInfo = false;
 
   isCheckingQuery = false;
   queryCheckResult: boolean | null = null;
@@ -166,9 +191,10 @@ export class StudentWorksheetComponent implements OnInit {
     this.worksheetForm = this.fb.group({
       answers: this.fb.array([])
     });
-    
-    this.sqlForm = this.fb.group({
-      query: ['', Validators.required]
+
+    this.manipulationForm = this.fb.group({
+      query: ['', Validators.required],
+      resetDatabase: [false]
     });
   }
 
@@ -445,89 +471,12 @@ export class StudentWorksheetComponent implements OnInit {
     });
   }
 
-  // SQL Executor Methods
-  executeQuery(): void {
-    if (!this.sqlForm.valid || !this.worksheet) {
-      return;
-    }
+  // SQL Executor Methods removed - now using Mixed Mode with executeManipulation()
 
-    const query = this.sqlForm.get('query')?.value?.trim();
-    if (!query) {
-      return;
-    }
-
-    this.isExecutingSql = true;
-    this.sqlError = null;
-    this.sqlResult = null;
-
-    const queryRequest: QueryRequest = {
-      query,
-      database: this.worksheet.database
-    };
-
-    this.http.post<QueryResult>(`${this.sqlBaseUrl}/execute`, queryRequest)
-      .subscribe({
-        next: (result) => {
-          this.isExecutingSql = false;
-          this.sqlResult = result;
-          this.snackBar.open(`Query executed successfully. ${result.rowCount} row(s) returned.`, 'OK', { 
-            duration: 3000 
-          });
-        },
-        error: (err: HttpErrorResponse) => {
-          this.isExecutingSql = false;
-          console.error('SQL execution error:', err);
-          this.sqlError = err.error?.message || 'Ein Fehler ist beim Ausführen der SQL-Abfrage aufgetreten';
-          this.snackBar.open('Fehler beim Ausführen der SQL-Abfrage', 'OK', { 
-            duration: 5000,
-            panelClass: ['error-snackbar']
-          });
-        }
-      });
-  }
-
-  clearSqlQuery(): void {
-    this.sqlForm.patchValue({ query: '' });
-    this.sqlResult = null;
-    this.sqlError = null;
-  }
-
-  clearSqlResults(): void {
-    this.sqlResult = null;
-    this.sqlError = null;
-  }
-
-  get sqlDisplayedColumns(): string[] {
-    return this.sqlResult?.columns || [];
-  }
-
+  // This method is deprecated - use checkQueryMatchesTaskForMixedMode() instead
   checkQueryMatchesTask() {
-    if (!this.worksheet || !this.sqlForm.valid) return;
-    this.isCheckingQuery = true;
-    this.queryCheckResult = null;
-    const selectedTask = this.worksheet.tasks[this.selectedTaskIndex]; // <--- NEU
-    const body = {
-      taskDescription: selectedTask?.description || '',
-      sqlQuery: this.sqlForm.get('query')?.value,
-      dbName: this.worksheet.database
-    };
-    this.http.post<{ matches: boolean, aiAnswer: string }>('http://localhost:3000/sql/check-query-matches-task', body)
-      .subscribe({
-        next: res => {
-          this.queryCheckResult = res.matches;
-          this.aiCheckResult = res;
-          this.isCheckingQuery = false;
-          this.snackBar.open(
-            res.matches ? 'Die Query passt zur Aufgabe!' : 'Die Query passt nicht zur Aufgabe.',
-            'OK',
-            { duration: 3000 }
-          );
-        },
-        error: err => {
-          this.isCheckingQuery = false;
-          this.snackBar.open('Fehler bei der Überprüfung der Query.', 'OK', { duration: 3000 });
-        }
-      });
+    // Redirect to Mixed Mode implementation
+    this.checkQueryMatchesTaskForMixedMode();
   }
 
   getOnlyReason(aiAnswer: string): string {
@@ -558,4 +507,180 @@ export class StudentWorksheetComponent implements OnInit {
     }
   });
 }
+
+  // ===== NEUE METHODEN FÜR ERWEITERTE SQL-FUNKTIONALITÄT =====
+
+  // Führt Manipulation Query aus
+  executeManipulation(): void {
+    if (!this.manipulationForm.valid || !this.worksheet) {
+      return;
+    }
+
+    const query = this.manipulationForm.get('query')?.value?.trim();
+    if (!query) {
+      return;
+    }
+
+    this.isExecutingManipulation = true;
+    this.manipulationError = null;
+    this.manipulationResult = null;
+
+    const manipulationRequest: ManipulationRequest = {
+      query,
+      database: this.worksheet.database,
+      resetDatabase: this.manipulationForm.get('resetDatabase')?.value || false
+    };
+
+    this.http.post<ManipulationResult>(`${this.sqlBaseUrl}/execute-manipulation`, manipulationRequest)
+      .subscribe({
+        next: (result) => {
+          this.isExecutingManipulation = false;
+          this.manipulationResult = result;
+          
+          // Bei Success: Copy-Info aktualisieren
+          this.loadDatabaseCopyInfo();
+          
+          this.snackBar.open(`${result.queryType}-Operation erfolgreich ausgeführt - ${result.affectedRows} betroffene Zeilen`, 'OK', { 
+            duration: 3000 
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isExecutingManipulation = false;
+          console.error('Manipulation execution error:', err);
+          this.manipulationError = err.error?.message || 'Ein Fehler ist beim Ausführen der Manipulation aufgetreten';
+          this.snackBar.open('Fehler beim Ausführen der Manipulation', 'OK', { 
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+  }
+
+  // Lädt Database Copy Info
+  loadDatabaseCopyInfo(): void {
+    if (!this.worksheet) return;
+    
+    this.isLoadingCopyInfo = true;
+    this.http.get<DatabaseCopyInfo>(`${this.sqlBaseUrl}/database-copy-info/${this.worksheet.database}`)
+      .subscribe({
+        next: (info) => {
+          this.databaseCopyInfo = info;
+          this.isLoadingCopyInfo = false;
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Fehler beim Laden der Copy-Info:', err);
+          this.databaseCopyInfo = null;
+          this.isLoadingCopyInfo = false;
+        }
+      });
+  }
+
+  // Setzt Database Copy zurück
+  resetDatabaseCopy(): void {
+    if (!this.worksheet) return;
+
+    this.http.post(`${this.sqlBaseUrl}/reset-database-copy/${this.worksheet.database}`, {})
+      .subscribe({
+        next: () => {
+          this.databaseCopyInfo = null;
+          this.snackBar.open('Datenbank-Kopie wurde zurückgesetzt', 'OK', { duration: 3000 });
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Fehler beim Zurücksetzen der Copy:', err);
+          this.snackBar.open('Fehler beim Zurücksetzen der Datenbank-Kopie', 'OK', { 
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+  }
+
+  // Löscht aktuellen Manipulation Query
+  clearManipulationQuery(): void {
+    this.manipulationForm.patchValue({ query: '' });
+    this.manipulationResult = null;
+    this.manipulationError = null;
+  }
+
+  // Setzt Beispiel-Query für Manipulation
+  setExampleManipulationQuery(): void {
+    this.manipulationForm.patchValue({
+      query: 'SELECT * FROM information_schema.tables WHERE table_schema = \'public\' LIMIT 5;'
+    });
+  }
+
+  // Formatiert Datum für Anzeige
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleString('de-DE');
+  }
+
+  // Berechnet verbleibende Zeit bis Copy-Ablauf
+  getRemainingTime(expiresAt: string): string {
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diff = expires.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Abgelaufen';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+  }
+
+  // Getter für einfacheren Template-Zugriff
+  get manipulationQueryControl() { return this.manipulationForm.get('query'); }
+  get resetDatabaseControl() { return this.manipulationForm.get('resetDatabase'); }
+
+  // ===== KI-CHECK FÜR MIXED MODE =====
+
+  // KI-Check für Mixed Mode (verwendet manipulationForm)
+  checkQueryMatchesTaskForMixedMode() {
+    if (!this.worksheet || !this.manipulationForm.valid || this.worksheet.tasks.length === 0) {
+      this.snackBar.open('Bitte wählen Sie eine gültige Query aus', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const selectedTask = this.worksheet.tasks[this.selectedTaskIndex];
+    const query = this.manipulationForm.get('query')?.value?.trim();
+
+    if (!selectedTask || !query) {
+      this.snackBar.open('Keine Aufgabe oder Query ausgewählt', 'OK', { duration: 3000 });
+      return;
+    }
+
+    this.isCheckingQuery = true;
+    this.aiCheckResult = null;
+
+    const checkData = {
+      taskDescription: selectedTask.description,
+      sqlQuery: query,
+      dbName: this.worksheet.database
+    };
+
+    this.http.post<{ matches: boolean, aiAnswer: string }>(`${this.sqlBaseUrl}/check-query-matches-task`, checkData)
+      .subscribe({
+        next: (result) => {
+          this.isCheckingQuery = false;
+          this.aiCheckResult = result;
+          
+          const message = result.matches 
+            ? 'Die KI bewertet Ihre Query als korrekt!' 
+            : 'Die KI hat Verbesserungsvorschläge für Ihre Query.';
+          
+          this.snackBar.open(message, 'OK', { 
+            duration: 5000,
+            panelClass: result.matches ? ['success-snackbar'] : ['warning-snackbar']
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isCheckingQuery = false;
+          console.error('KI-Check error:', err);
+          this.snackBar.open('Fehler beim KI-Check der Query', 'OK', { 
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+  }
 }

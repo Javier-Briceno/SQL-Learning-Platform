@@ -47,6 +47,127 @@
       margin-top: 4px;
     }
   }
+
+  // ===== NEUE STYLES FÜR TAB-SYSTEM =====
+  
+  .tab-content {
+    padding: 20px 0;
+    min-height: 400px;
+  }
+
+  // ===== MANIPULATION TAB STYLES =====
+  
+  .copy-info-panel {
+    margin-bottom: 20px;
+    
+    .copy-info-content {
+      padding: 16px;
+      
+      .copy-detail {
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        
+        strong {
+          color: #333;
+        }
+      }
+      
+      .reset-button {
+        margin-top: 16px;
+      }
+    }
+  }
+
+  // ===== CHIP STYLES =====
+  
+  .success-chip {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+  
+  .error-chip {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+
+  // ===== HISTORIE TAB STYLES =====
+  
+  .no-history {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+  }
+  
+  .history-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    
+    .history-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background-color: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+      
+      .history-timestamp {
+        margin-left: auto;
+        font-size: 0.8rem;
+        color: #666;
+      }
+    }
+    
+    .history-content {
+      padding: 16px;
+      
+      .history-database {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      
+      .history-query {
+        background-color: #f8f8f8;
+        border-radius: 4px;
+        padding: 12px;
+        margin: 8px 0;
+        
+        pre {
+          margin: 0;
+          font-family: monospace;
+          font-size: 0.9rem;
+          white-space: pre-wrap;
+          word-break: break-all;
+        }
+      }
+      
+      .history-actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+      }
+    }
+  }
+
+  // ===== RESULT MESSAGE STYLES =====
+  
+  .result-message {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #f0f7ff;
+    border-left: 4px solid #2196f3;
+    border-radius: 4px;
+  }
 }
 
 /* Form Styling */

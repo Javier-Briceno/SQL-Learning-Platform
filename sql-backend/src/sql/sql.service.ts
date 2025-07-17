@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException, BadRequestException, NotFound
 import { Client } from 'pg';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
+import { ExecuteManipulationDto, ManipulationResult, DatabaseCopyInfo } from './manipulation-types.dto';
 
 // Interface für Query-Ergebnisse
 export interface QueryResult {
@@ -965,6 +966,7 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
       await client.end();
     }
   }
+<<<<<<< Updated upstream
   
   async evaluateAnswerWithAI(aufgabe: string, antwort: string, dbName: string): Promise<{ feedback: string; korrekt: boolean }> {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -1087,4 +1089,344 @@ Antworte zuerst mit JA oder NEIN (ob die Query die Aufgabe korrekt löst), dann 
 
 
 
+=======
+
+  // ===== NEUE METHODEN FÜR DATENBANKMANIPULATION =====
+
+  // Hauptmethode für Datenbankmanipulation mit automatischer Kopie-Erstellung
+  async executeManipulation(dto: ExecuteManipulationDto, userId: number): Promise<ManipulationResult> {
+    const { query, database, resetDatabase } = dto;
+
+    // Input-Validierung
+    if (!query || query.trim().length === 0) {
+      throw new BadRequestException('SQL Query darf nicht leer sein.');
+    }
+
+    if (!database || database.trim().length === 0) {
+      throw new BadRequestException('Datenbankname darf nicht leer sein.');
+    }
+
+    // Zugriffsprüfung wie bei executeQuery
+    const hasAccess = await this.checkDatabaseAccess(database, userId);
+    if (!hasAccess) {
+      throw new NotFoundException(`Datenbank '${database}' wurde nicht gefunden oder ist nicht verfügbar.`);
+    }
+
+    // Validiere Manipulation Query
+    const queryType = this.validateManipulationQuery(query);
+
+    // Bei Reset-Anfrage: Kopie zurücksetzen
+    if (resetDatabase) {
+      await this.resetDatabaseCopy(database, userId);
+    }
+
+    // Stelle sicher, dass eine Kopie existiert
+    const copyDbName = await this.ensureDatabaseCopy(database, userId);
+
+    let client: Client | null = null;
+    const startTime = Date.now();
+
+    try {
+      // Verbindung zur Kopie-Datenbank herstellen
+      client = await this.getDatabaseClient(copyDbName);
+
+      // Query mit Timeout ausführen
+      const result = await Promise.race([
+        client.query(query),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Query Timeout')), 30000)
+        )
+      ]) as any;
+
+      const executionTime = Date.now() - startTime;
+
+      // Update lastUsed der Kopie
+      await this.updateCopyLastUsed(copyDbName);
+
+      // Erstelle Basis-Response
+      const response: ManipulationResult = {
+        success: true,
+        message: `${queryType}-Operation erfolgreich ausgeführt`,
+        affectedRows: result.rowCount || 0,
+        executionTime,
+        queryType,
+        resetPerformed: resetDatabase || false
+      };
+
+      // Bei SELECT-Queries: Auch Daten zurückgeben
+      if (queryType === 'SELECT') {
+        response.columns = result.fields ? result.fields.map((field: any) => field.name) : [];
+        response.rows = result.rows || [];
+        response.message = `SELECT-Operation erfolgreich ausgeführt - ${response.affectedRows} Zeilen gefunden`;
+      }
+
+      return response;
+
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      console.error(`Manipulation Query-Fehler nach ${executionTime}ms:`, error);
+
+      if (error.message === 'Query Timeout') {
+        throw new BadRequestException('Query-Timeout: Die Abfrage dauerte zu lange (max. 30 Sekunden).');
+      }
+
+      // PostgreSQL-spezifische Fehlerbehandlung
+      if (error.code) {
+        switch (error.code) {
+          case '42P01':
+            throw new BadRequestException(`Tabelle oder Relation existiert nicht: ${error.message}`);
+          case '42703':
+            throw new BadRequestException(`Spalte existiert nicht: ${error.message}`);
+          case '42601':
+            throw new BadRequestException(`SQL-Syntax-Fehler: ${error.message}`);
+          case '23505':
+            throw new BadRequestException(`Eindeutigkeitsbeschränkung verletzt: ${error.message}`);
+          case '23503':
+            throw new BadRequestException(`Fremdschlüssel-Beschränkung verletzt: ${error.message}`);
+          case '23502':
+            throw new BadRequestException(`NULL-Wert in NOT NULL Spalte: ${error.message}`);
+          default:
+            throw new BadRequestException(`Datenbankfehler: ${error.message}`);
+        }
+      }
+
+      throw new InternalServerErrorException(`Unerwarteter Fehler bei der Manipulation: ${error.message}`);
+    } finally {
+      if (client) {
+        await client.end();
+      }
+    }
+  }
+
+  // Validiert Manipulation Queries
+  private validateManipulationQuery(query: string): 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'ALTER' | 'DROP' {
+    const normalizedQuery = query.trim().toLowerCase();
+    
+    // Erlaubte Befehle (sowohl Read-Only als auch Manipulation)
+    const allowedCommands = [
+      { pattern: /^\s*select\s+/i, type: 'SELECT' },
+      { pattern: /^\s*insert\s+into\s+/i, type: 'INSERT' },
+      { pattern: /^\s*update\s+/i, type: 'UPDATE' },
+      { pattern: /^\s*delete\s+from\s+/i, type: 'DELETE' },
+      { pattern: /^\s*create\s+(table|index|sequence)\s+/i, type: 'CREATE' },
+      { pattern: /^\s*alter\s+table\s+/i, type: 'ALTER' },
+      { pattern: /^\s*drop\s+(table|index|sequence)\s+/i, type: 'DROP' }
+    ];
+
+    // Verbotene Befehle (System-relevante Operationen)
+    const forbiddenCommands = [
+      /\bcreate\s+(database|schema|user|role)\b/i,
+      /\bdrop\s+(database|schema|user|role)\b/i,
+      /\bgrant\s+/i,
+      /\brevoke\s+/i,
+      /\bcopy\s+/i,
+      /\b\\copy\s+/i,
+      /\btruncate\s+/i
+    ];
+
+    // Prüfe auf verbotene Befehle
+    for (const pattern of forbiddenCommands) {
+      if (pattern.test(normalizedQuery)) {
+        throw new BadRequestException(`SQL-Befehl ist nicht erlaubt. Systemrelevante Operationen sind in der Lernumgebung nicht gestattet.`);
+      }
+    }
+
+    // Bestimme Query-Typ
+    for (const { pattern, type } of allowedCommands) {
+      if (pattern.test(normalizedQuery)) {
+        return type as any;
+      }
+    }
+
+    throw new BadRequestException('SQL-Befehl ist nicht erkannt oder nicht erlaubt. SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE und DROP TABLE sind gestattet.');
+  }
+
+  // Stelle sicher, dass eine Datenbank-Kopie existiert
+  private async ensureDatabaseCopy(originalDatabase: string, userId: number): Promise<string> {
+    // Prüfe, ob bereits eine Kopie existiert
+    let existingCopy = await this.prisma.databaseCopy.findFirst({
+      where: {
+        originalDatabase,
+        userId,
+        expiresAt: { gt: new Date() } // Noch nicht abgelaufen
+      }
+    });
+
+    if (existingCopy) {
+      return existingCopy.copyDatabase;
+    }
+
+    // Erstelle neue Kopie
+    const copyDbName = `${originalDatabase}_copy_${userId}_${Date.now()}`;
+    
+    try {
+      // Kopiere die Datenbank
+      await this.createDatabaseCopy(originalDatabase, copyDbName);
+      
+      // Registriere die Kopie
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 4); // Kopie läuft nach 4 Stunden ab
+
+      await this.prisma.databaseCopy.create({
+        data: {
+          originalDatabase,
+          copyDatabase: copyDbName,
+          userId,
+          expiresAt
+        }
+      });
+
+      console.log(`Database copy created: ${copyDbName} for user ${userId}`);
+      return copyDbName;
+
+    } catch (error) {
+      console.error('Error creating database copy:', error);
+      throw new InternalServerErrorException(`Fehler beim Erstellen der Datenbank-Kopie: ${error.message}`);
+    }
+  }
+
+  // Erstellt eine physische Kopie der PostgreSQL-Datenbank
+  private async createDatabaseCopy(originalDb: string, copyDb: string): Promise<void> {
+    const adminClient = await this.getAdminClient();
+    
+    try {
+      // Beende alle Verbindungen zur Original-Datenbank (für den Kopierprozess)
+      await adminClient.query(`
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE datname = $1 AND pid <> pg_backend_pid()
+      `, [originalDb]);
+
+      // Erstelle Kopie mit CREATE DATABASE ... WITH TEMPLATE
+      await adminClient.query(`CREATE DATABASE "${copyDb}" WITH TEMPLATE "${originalDb}"`);
+
+    } finally {
+      await adminClient.end();
+    }
+  }
+
+  // Prüft Datenbankzugriff (wie in executeQuery)
+  private async checkDatabaseAccess(databaseName: string, userId: number): Promise<boolean> {
+    const managedDb = await this.prisma.managedDatabase.findUnique({
+      where: { dbName: databaseName }
+    });
+
+    if (managedDb && managedDb.ownerId === userId) {
+      return true;
+    }
+
+    // Prüfen, ob die Datenbank in einem Worksheet verwendet wird
+    const worksheet = await this.prisma.worksheet.findFirst({
+      where: { database: databaseName }
+    });
+
+    return !!worksheet;
+  }
+
+  // Aktualisiert lastUsed einer Kopie
+  private async updateCopyLastUsed(copyDbName: string): Promise<void> {
+    try {
+      await this.prisma.databaseCopy.update({
+        where: { copyDatabase: copyDbName },
+        data: { lastUsed: new Date() }
+      });
+    } catch (error) {
+      console.warn('Failed to update copy lastUsed:', error);
+    }
+  }
+
+  // Gibt Informationen über die Datenbank-Kopie zurück
+  async getDatabaseCopyInfo(originalDatabase: string, userId: number): Promise<DatabaseCopyInfo | null> {
+    const copy = await this.prisma.databaseCopy.findFirst({
+      where: {
+        originalDatabase,
+        userId,
+        expiresAt: { gt: new Date() }
+      }
+    });
+
+    if (!copy) {
+      return null;
+    }
+
+    return {
+      originalDatabase: copy.originalDatabase,
+      copyDatabase: copy.copyDatabase,
+      userId: copy.userId,
+      createdAt: copy.createdAt,
+      lastUsed: copy.lastUsed,
+      expiresAt: copy.expiresAt
+    };
+  }
+
+  // Setzt eine Datenbank-Kopie zurück
+  async resetDatabaseCopy(originalDatabase: string, userId: number): Promise<{ success: boolean, message: string }> {
+    // Finde und lösche bestehende Kopie
+    const existingCopy = await this.prisma.databaseCopy.findFirst({
+      where: {
+        originalDatabase,
+        userId
+      }
+    });
+
+    if (existingCopy) {
+      // Lösche physische Datenbank
+      try {
+        const adminClient = await this.getAdminClient();
+        await adminClient.query(`DROP DATABASE IF EXISTS "${existingCopy.copyDatabase}"`);
+        await adminClient.end();
+      } catch (error) {
+        console.warn('Failed to drop copy database:', error);
+      }
+
+      // Entferne Eintrag aus Datenbank
+      await this.prisma.databaseCopy.delete({
+        where: { id: existingCopy.id }
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Datenbank-Kopie wurde zurückgesetzt. Bei der nächsten Manipulation wird eine neue Kopie erstellt.'
+    };
+  }
+
+  // Räumt abgelaufene Kopien auf
+  async cleanupExpiredCopies(): Promise<{ deleted: number, message: string }> {
+    const expiredCopies = await this.prisma.databaseCopy.findMany({
+      where: {
+        expiresAt: { lt: new Date() }
+      }
+    });
+
+    let deletedCount = 0;
+    const adminClient = await this.getAdminClient();
+
+    try {
+      for (const copy of expiredCopies) {
+        try {
+          // Lösche physische Datenbank
+          await adminClient.query(`DROP DATABASE IF EXISTS "${copy.copyDatabase}"`);
+          
+          // Entferne Eintrag
+          await this.prisma.databaseCopy.delete({
+            where: { id: copy.id }
+          });
+          
+          deletedCount++;
+          console.log(`Cleaned up expired copy: ${copy.copyDatabase}`);
+        } catch (error) {
+          console.warn(`Failed to cleanup copy ${copy.copyDatabase}:`, error);
+        }
+      }
+    } finally {
+      await adminClient.end();
+    }
+
+    return {
+      deleted: deletedCount,
+      message: `${deletedCount} abgelaufene Datenbank-Kopien wurden aufgeräumt.`
+    };
+  }
+>>>>>>> Stashed changes
 }

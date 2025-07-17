@@ -5,6 +5,7 @@ import { Multer } from 'multer';
 import { CheckQueryDto } from './check-query.dto';
 import { GenerateTaskDto } from './generate-task.dto';
 import { CreatePostgresDbDto, CreatePostgresDbResponse } from './create-database.dto';
+import { ExecuteManipulationDto, ManipulationResult, DatabaseCopyInfo } from './manipulation-types.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 // DTOs für Query Execution
@@ -109,6 +110,7 @@ async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: bool
     }
   }
 
+<<<<<<< Updated upstream
   @Post('evaluate-answer')
   async evaluateAnswerWithAI(@Body() body: { aufgabe: string; antwort: string; dbName: string }): Promise<{ feedback: string; korrekt: boolean }> {
     return this.sqlService.evaluateAnswerWithAI(body.aufgabe, body.antwort, body.dbName);
@@ -128,6 +130,37 @@ async checkQueryMatchesTask(@Body() dto: CheckQueryDto): Promise<{ matches: bool
     return this.sqlService.evaluateSubmissionWithAI(body.aufgaben);
   }
 
+=======
+  // ===== NEUE MANIPULATION ENDPUNKTE =====
+
+  // Datenbankmanipulation mit automatischem Kopie-System
+  @Post('execute-manipulation')
+  @UseGuards(AuthGuard('jwt'))
+  async executeManipulation(@Body() dto: ExecuteManipulationDto, @Request() req): Promise<ManipulationResult> {
+    return this.sqlService.executeManipulation(dto, req.user.id);
+  }
+
+  // Informationen über die aktuelle Datenbank-Kopie
+  @Get('database-copy-info/:database')
+  @UseGuards(AuthGuard('jwt'))
+  async getDatabaseCopyInfo(@Param('database') database: string, @Request() req): Promise<DatabaseCopyInfo | null> {
+    return this.sqlService.getDatabaseCopyInfo(database, req.user.id);
+  }
+
+  // Datenbank-Kopie zurücksetzen
+  @Post('reset-database-copy')
+  @UseGuards(AuthGuard('jwt'))
+  async resetDatabaseCopy(@Body() body: { database: string }, @Request() req): Promise<{ success: boolean, message: string }> {
+    return this.sqlService.resetDatabaseCopy(body.database, req.user.id);
+  }
+
+  // Abgelaufene Kopien aufräumen (Admin-Only)
+  @Post('cleanup-expired-copies')
+  @UseGuards(AuthGuard('jwt'))
+  async cleanupExpiredCopies(): Promise<{ deleted: number, message: string }> {
+    return this.sqlService.cleanupExpiredCopies();
+  }
+>>>>>>> Stashed changes
 }
 
 

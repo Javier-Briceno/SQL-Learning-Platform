@@ -158,7 +158,7 @@
       </mat-tab>
       
       <!-- DATABASE MANIPULATION TAB -->
-      <mat-tab label="Database Operations" icon="edit">
+      <mat-tab label="Database Manipulation" icon="edit">
         <div class="tab-content">
           
           <!-- Copy Info Banner -->
@@ -239,15 +239,15 @@
             <!-- SQL Manipulation Query Input -->
             <div class="form-section">
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>SQL Query (Mixed Mode)</mat-label>
+                <mat-label>SQL Manipulation Query</mat-label>
                 <textarea 
                   matInput 
                   formControlName="query"
                   rows="8"
-                  placeholder="Geben Sie hier Ihre SQL-Query ein (SELECT oder Manipulation)..."
+                  placeholder="Geben Sie hier Ihre Manipulation-Query ein..."
                   style="max-height: 180px; min-height: 80px; overflow-y: auto; font-family: monospace; white-space: pre; resize: vertical;">
                 </textarea>
-                <mat-hint>Unterstützte Befehle: SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE, DROP TABLE</mat-hint>
+                <mat-hint>Unterstützte Befehle: INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE, DROP TABLE</mat-hint>
                 <mat-error *ngIf="manipulationQueryControl?.invalid && manipulationQueryControl?.touched">
                   <span *ngIf="manipulationQueryControl?.errors?.['required']">SQL Query ist erforderlich</span>
                   <span *ngIf="manipulationQueryControl?.errors?.['minlength']">Query darf nicht leer sein</span>
@@ -315,36 +315,6 @@
               </div>
               <div class="result-message">
                 <strong>Nachricht:</strong> {{ manipulationResult.message }}
-              </div>
-            </div>
-
-            <!-- SELECT Results Data Table (nur für SELECT Queries anzeigen) -->
-            <div *ngIf="manipulationResult.queryType === 'SELECT' && manipulationResult.columns && manipulationResult.rows" class="data-table-section">
-              <h4>
-                <mat-icon>table_view</mat-icon>
-                Query-Ergebnisse
-              </h4>
-              
-              <div class="table-container">
-                <table mat-table [dataSource]="manipulationResult.rows" class="results-table">
-                  
-                  <!-- Dynamische Spalten für Query-Ergebnisse -->
-                  <ng-container *ngFor="let column of manipulationResult.columns; let i = index" [matColumnDef]="column">
-                    <th mat-header-cell *matHeaderCellDef class="table-header">{{ column }}</th>
-                    <td mat-cell *matCellDef="let row" class="table-cell">
-                      {{ row[column] !== null && row[column] !== undefined ? row[column] : 'NULL' }}
-                    </td>
-                  </ng-container>
-
-                  <tr mat-header-row *matHeaderRowDef="manipulationResult.columns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: manipulationResult.columns;"></tr>
-                </table>
-              </div>
-
-              <!-- No Results Message -->
-              <div *ngIf="manipulationResult.rows?.length === 0" class="no-results">
-                <mat-icon>info</mat-icon>
-                <span>Keine Daten gefunden</span>
               </div>
             </div>
           </div>

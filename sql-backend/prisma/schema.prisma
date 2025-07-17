@@ -30,6 +30,16 @@ model ManagedDatabase {
   createdAt DateTime @default(now())
 }
 
+model DatabaseCopy {
+  id               Int      @id @default(autoincrement())
+  originalDatabase String
+  copyDatabase     String   @unique
+  userId           Int
+  createdAt        DateTime @default(now())
+  lastUsed         DateTime @default(now())
+  expiresAt        DateTime
+}
+
 model Worksheet {
   id          Int          @id @default(autoincrement())
   title       String

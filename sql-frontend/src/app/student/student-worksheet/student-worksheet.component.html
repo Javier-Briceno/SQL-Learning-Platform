@@ -145,137 +145,207 @@
       </div>
     </div>
 
-    <!-- Right Panel - SQL Executor -->
+    <!-- Right Panel - Enhanced SQL Executor -->
     <div class="right-panel">
-  <div class="panel-header">
-    <h2>
-      <mat-icon>storage</mat-icon>
-      SQL Executor
-    </h2>
-    <button mat-stroked-button color="primary" (click)="showDatabaseContent()">
-  <mat-icon>table_view</mat-icon>
-  Datenbank anzeigen
-</button>
-  </div>
+      <div class="panel-header">
+        <h2>
+          <mat-icon>storage</mat-icon>
+          SQL Executor
+        </h2>
+        <button mat-stroked-button color="primary" (click)="showDatabaseContent()">
+          <mat-icon>table_view</mat-icon>
+          Datenbank anzeigen
+        </button>
+      </div>
       
       <mat-card class="sql-executor-card">
         <mat-card-content>
-          <form [formGroup]="sqlForm" (ngSubmit)="executeQuery()">
-              <!-- SQL Query Input -->
-            <div class="form-section">
-              <mat-form-field appearance="outline" class="query-input">
-  <mat-label>SQL Query</mat-label>
-  <textarea 
-    matInput 
-    formControlName="query"
-    rows="8"
-    placeholder="Geben Sie hier Ihre SQL-Abfrage ein..."
-    style="max-height: 180px; min-height: 80px; overflow-y: auto; font-family: monospace; white-space: pre; resize: vertical;">
-  </textarea>
-  <mat-hint>Datenbank: {{ worksheet.database }}</mat-hint>
-</mat-form-field>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="sql-actions">
-              <button 
-                type="submit" 
-                mat-raised-button 
-                color="primary"
-                [disabled]="sqlForm.invalid || isExecutingSql">
-                <mat-icon *ngIf="!isExecutingSql">play_arrow</mat-icon>
-                <mat-spinner *ngIf="isExecutingSql" diameter="20"></mat-spinner>
-                {{ isExecutingSql ? 'Wird ausgeführt...' : 'Query ausführen' }}
-              </button>
-
-              <button 
-                type="button" 
-                mat-button 
-                (click)="clearSqlQuery()"
-                [disabled]="isExecutingSql">
-                <mat-icon>clear</mat-icon>
-                Leeren
-              </button>
-            </div>
-          </form>
-
-          <!-- Error Display -->
-          <div *ngIf="sqlError" class="error-container">
-            <mat-icon color="warn">error</mat-icon>
-            <span>{{ sqlError }}</span>
-          </div>
-
-          <!-- Results Section -->
-          <div *ngIf="sqlResult" class="results-section">
+          <!-- Database Operations (Mixed Mode) -->
+          <div class="tab-content">
             
-            <!-- Results Summary -->
-            <div class="results-summary">
-              <h3>
-                <mat-icon>assignment</mat-icon>
-                Abfrageergebnisse
-              </h3>
-              <div class="summary-info">
-                <span class="info-item">
-                  <strong>Zeilen:</strong> {{ sqlResult.rowCount }}
-                </span>
-                <span class="info-item" *ngIf="sqlResult.executionTime">
-                  <strong>Ausführungszeit:</strong> {{ sqlResult.executionTime }}ms
-                </span>
+            <!-- Copy Info Banner -->
+            <mat-expansion-panel *ngIf="databaseCopyInfo" class="copy-info-panel">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>content_copy</mat-icon>
+                  Datenbank-Kopie Information
+                </mat-panel-title>
+                <mat-panel-description>
+                  Verbleibende Zeit: {{ getRemainingTime(databaseCopyInfo.expiresAt) }}
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="copy-info-content">
+                <div class="copy-detail">
+                  <strong>Original:</strong> {{ databaseCopyInfo.originalDatabase }}
+                </div>
+                <div class="copy-detail">
+                  <strong>Kopie:</strong> {{ databaseCopyInfo.copyDatabase }}
+                </div>
+                <div class="copy-detail">
+                  <strong>Erstellt:</strong> {{ formatDate(databaseCopyInfo.createdAt) }}
+                </div>
+                <div class="copy-detail" *ngIf="databaseCopyInfo.lastUsed">
+                  <strong>Zuletzt verwendet:</strong> {{ formatDate(databaseCopyInfo.lastUsed) }}
+                </div>
+                <div class="copy-detail">
+                  <strong>Läuft ab:</strong> {{ formatDate(databaseCopyInfo.expiresAt) }}
+                </div>
+                <button 
+                  mat-raised-button 
+                  color="warn"
+                  (click)="resetDatabaseCopy()"
+                  class="reset-button">
+                  <mat-icon>refresh</mat-icon>
+                  Kopie zurücksetzen
+                </button>
               </div>
+            </mat-expansion-panel>
+
+            <form [formGroup]="manipulationForm" (ngSubmit)="executeManipulation()">
+              
+              <!-- Reset Database Checkbox -->
+              <div class="form-section">
+                <mat-checkbox formControlName="resetDatabase">
+                  Datenbank-Kopie vor Ausführung zurücksetzen
+                </mat-checkbox>
+              </div>
+
+              <!-- SQL Query Input -->
+              <div class="form-section">
+                <mat-form-field appearance="outline" class="query-input">
+                  <mat-label>SQL Query (Mixed Mode)</mat-label>
+                  <textarea 
+                    matInput 
+                    formControlName="query"
+                    rows="8"
+                    placeholder="Geben Sie hier Ihre SQL-Query ein (SELECT oder Manipulation)..."
+                    style="max-height: 180px; min-height: 80px; overflow-y: auto; font-family: monospace; white-space: pre; resize: vertical;">
+                  </textarea>
+                  <mat-hint>Unterstützte Befehle: SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE, DROP TABLE</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="sql-actions">
+                <button 
+                  type="submit" 
+                  mat-raised-button 
+                  color="primary"
+                  [disabled]="manipulationForm.invalid || isExecutingManipulation">
+                  <mat-icon *ngIf="!isExecutingManipulation">play_arrow</mat-icon>
+                  <mat-spinner *ngIf="isExecutingManipulation" diameter="20"></mat-spinner>
+                  {{ isExecutingManipulation ? 'Wird ausgeführt...' : 'Query ausführen' }}
+                </button>
+
+                <button 
+                  type="button" 
+                  mat-button 
+                  (click)="setExampleManipulationQuery()"
+                  [disabled]="isExecutingManipulation">
+                  <mat-icon>lightbulb</mat-icon>
+                  Beispiel-Query
+                </button>
+
+                <button 
+                  type="button" 
+                  mat-button 
+                  (click)="clearManipulationQuery()"
+                  [disabled]="isExecutingManipulation">
+                  <mat-icon>clear</mat-icon>
+                  Leeren
+                </button>
+              </div>
+            </form>
+
+            <!-- Error Display -->
+            <div *ngIf="manipulationError" class="error-container">
+              <mat-icon color="warn">error</mat-icon>
+              <span>{{ manipulationError }}</span>
             </div>
 
-            <!-- Results Table -->
-            <div class="table-container scroll-x" *ngIf="sqlResult.rows.length > 0">
-  <div style="overflow-x: auto; max-width: 100%;">
-    <table mat-table [dataSource]="sqlResult.rows" class="results-table mat-elevation-z1">
+            <!-- Manipulation Results Section -->
+            <div *ngIf="manipulationResult" class="results-section">
+              
+              <!-- Results Summary -->
+              <div class="results-summary">
+                <h3>
+                  <mat-icon>check_circle</mat-icon>
+                  Operation Ergebnisse
+                </h3>
+                <div class="summary-info">
+                  <mat-chip-set>
+                    <mat-chip [class.success-chip]="manipulationResult.success" [class.error-chip]="!manipulationResult.success">
+                      {{ manipulationResult.success ? 'Erfolgreich' : 'Fehlgeschlagen' }}
+                    </mat-chip>
+                    <mat-chip>{{ manipulationResult.queryType }}</mat-chip>
+                    <mat-chip>{{ manipulationResult.affectedRows }} betroffene Zeilen</mat-chip>
+                    <mat-chip>{{ manipulationResult.executionTime }}ms</mat-chip>
+                    <mat-chip *ngIf="manipulationResult.resetPerformed">Kopie zurückgesetzt</mat-chip>
+                  </mat-chip-set>
+                </div>
+                <div class="result-message">
+                  <strong>Nachricht:</strong> {{ manipulationResult.message }}
+                </div>
+              </div>
+
+              <!-- SELECT Results Data Table (nur für SELECT Queries anzeigen) -->
+              <div *ngIf="manipulationResult.queryType === 'SELECT' && manipulationResult.columns && manipulationResult.rows" class="data-table-section">
+                <h4>
+                  <mat-icon>table_view</mat-icon>
+                  Query-Ergebnisse
+                </h4>
                 
-                <!-- Dynamic Columns -->
-                <ng-container 
-                  *ngFor="let column of sqlResult.columns" 
-                  [matColumnDef]="column">
-                  <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
-                  <td mat-cell *matCellDef="let row">
-                    <span class="cell-content">{{ row[column] | json }}</span>
-                  </td>
-                </ng-container>
+                <div class="table-container">
+                  <table mat-table [dataSource]="manipulationResult.rows" class="results-table">
+                    
+                    <!-- Dynamische Spalten für Query-Ergebnisse -->
+                    <ng-container *ngFor="let column of manipulationResult.columns; let i = index" [matColumnDef]="column">
+                      <th mat-header-cell *matHeaderCellDef class="table-header">{{ column }}</th>
+                      <td mat-cell *matCellDef="let row" class="table-cell">
+                        {{ row[column] !== null && row[column] !== undefined ? row[column] : 'NULL' }}
+                      </td>
+                    </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="sqlResult.columns"></tr>
-                <tr mat-row *matRowDef="let row; columns: sqlResult.columns;"></tr>
-              </table>
-            </div>
-            </div>
+                    <tr mat-header-row *matHeaderRowDef="manipulationResult.columns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: manipulationResult.columns;"></tr>
+                  </table>
+                </div>
 
-            <!-- No Results Message -->
-            <div *ngIf="sqlResult.rows.length === 0" class="no-results">
-              <mat-icon>info</mat-icon>
-              <span>Die Abfrage wurde erfolgreich ausgeführt, aber keine Daten gefunden.</span>
+                <!-- No Results Message -->
+                <div *ngIf="manipulationResult.rows?.length === 0" class="no-results">
+                  <mat-icon>info</mat-icon>
+                  <span>Keine Daten gefunden</span>
+                </div>
+              </div>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
+      
       <!-- KI-Check-Button unter dem SQL Executor -->
-       <div class="centered-btn">
-       <button mat-stroked-button color="accent"
-        style="margin-top: 12px;"
-        (click)="checkQueryMatchesTask()"
-        [disabled]="isCheckingQuery || sqlForm.invalid || !worksheet.canEdit">
-  <mat-icon>psychology</mat-icon>
-  Query von KI prüfen
-  <mat-spinner *ngIf="isCheckingQuery" diameter="18" style="margin-left:8px;vertical-align:middle"></mat-spinner>
-</button>
-</div>
+      <div class="centered-btn">
+        <button mat-stroked-button color="accent"
+          style="margin-top: 12px;"
+          (click)="checkQueryMatchesTaskForMixedMode()"
+          [disabled]="isCheckingQuery || manipulationForm.invalid || !worksheet.canEdit">
+          <mat-icon>psychology</mat-icon>
+          Query von KI prüfen
+          <mat-spinner *ngIf="isCheckingQuery" diameter="18" style="margin-left:8px;vertical-align:middle"></mat-spinner>
+        </button>
+      </div>
+      
       <div *ngIf="aiCheckResult">
-  <div>
-    <strong>KI-Bewertung:</strong>
-    <span [ngClass]="{'text-success': aiCheckResult.matches, 'text-danger': !aiCheckResult.matches}">
-      {{ aiCheckResult.matches ? 'Korrekt' : 'Nicht korrekt' }}
-    </span>
-  </div>
-  <div class="ai-answer-box" style="margin-top: 8px;">
-  <strong>KI-Antwort:</strong>
-  <span>{{ getOnlyReason(aiCheckResult.aiAnswer) }}</span>
-</div>
-</div>
+        <div>
+          <strong>KI-Bewertung:</strong>
+          <span [ngClass]="{'text-success': aiCheckResult.matches, 'text-danger': !aiCheckResult.matches}">
+            {{ aiCheckResult.matches ? 'Korrekt' : 'Nicht korrekt' }}
+          </span>
+        </div>
+        <div class="ai-answer-box" style="margin-top: 8px;">
+          <strong>KI-Antwort:</strong>
+          <span>{{ getOnlyReason(aiCheckResult.aiAnswer) }}</span>
+        </div>
+      </div>
     </div>
   </div>
   <!-- Read-Only Message für abgegebene Worksheets -->

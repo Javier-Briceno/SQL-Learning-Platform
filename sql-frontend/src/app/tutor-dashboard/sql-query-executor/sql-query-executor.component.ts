@@ -11,6 +11,10 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface QueryResult {
   columns: string[];
@@ -22,6 +26,33 @@ interface QueryResult {
 interface QueryRequest {
   query: string;
   database: string;
+}
+
+interface ManipulationRequest {
+  query: string;
+  database: string;
+  resetDatabase?: boolean;
+}
+
+interface ManipulationResult {
+  success: boolean;
+  message: string;
+  affectedRows: number;
+  executionTime: number;
+  queryType: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'ALTER' | 'DROP';
+  resetPerformed: boolean;
+  // Für SELECT-Queries: Daten zurückgeben
+  columns?: string[];
+  rows?: any[];
+}
+
+interface DatabaseCopyInfo {
+  originalDatabase: string;
+  copyDatabase: string;
+  userId: number;
+  createdAt: string;
+  lastUsed: string | null;
+  expiresAt: string;
 }
 
 @Component({
@@ -38,7 +69,11 @@ interface QueryRequest {
     MatTableModule,
     MatProgressSpinnerModule,
     MatIconModule,
-    MatTabsModule
+    MatTabsModule,
+    MatCheckboxModule,
+    MatChipsModule,
+    MatExpansionModule,
+    MatTooltipModule
   ],
   templateUrl: './sql-query-executor.component.html',
   styleUrl: './sql-query-executor.component.scss'
@@ -46,10 +81,17 @@ interface QueryRequest {
 export class SqlQueryExecutorComponent implements OnInit {
   private baseUrl = 'http://localhost:3000/sql';
 
-  // Form für SQL Query Input
+  // Form für SQL Query Input (Read-Only)
   queryForm = new FormGroup({
     database: new FormControl('', [Validators.required]),
     query: new FormControl('', [Validators.required, Validators.minLength(1)])
+  });
+
+  // Form für Manipulation Queries
+  manipulationForm = new FormGroup({
+    database: new FormControl('', [Validators.required]),
+    query: new FormControl('', [Validators.required, Validators.minLength(1)]),
+    resetDatabase: new FormControl(false)
   });
 
   // Verfügbare Datenbanken
@@ -57,16 +99,23 @@ export class SqlQueryExecutorComponent implements OnInit {
   
   // Query Execution State
   isExecuting = false;
+  isExecutingManipulation = false;
   
   // Ergebnisse
   queryResult: QueryResult | null = null;
+  manipulationResult: ManipulationResult | null = null;
   executionError: string | null = null;
+  manipulationError: string | null = null;
   
   // Loading States
   isLoadingDatabases = false;
+  isLoadingCopyInfo = false;
+  
+  // Database Copy Info
+  databaseCopyInfo: DatabaseCopyInfo | null = null;
   
   // Query History (für spätere Erweiterung)
-  queryHistory: { query: string; database: string; timestamp: Date; success: boolean }[] = [];
+  queryHistory: { query: string; database: string; timestamp: Date; success: boolean; type: 'read' | 'manipulation' }[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -114,7 +163,7 @@ export class SqlQueryExecutorComponent implements OnInit {
           this.isExecuting = false;
           
           // Query zur Historie hinzufügen
-          this.addToHistory(queryRequest.query, queryRequest.database, true);
+          this.addToHistory(queryRequest.query, queryRequest.database, true, 'read');
         },
         error: (err: HttpErrorResponse) => {
           console.error('Fehler bei der Query-Ausführung:', err);
@@ -122,7 +171,7 @@ export class SqlQueryExecutorComponent implements OnInit {
           this.isExecuting = false;
           
           // Fehlgeschlagene Query zur Historie hinzufügen
-          this.addToHistory(queryRequest.query, queryRequest.database, false);
+          this.addToHistory(queryRequest.query, queryRequest.database, false, 'read');
         }
       });
   }
@@ -135,12 +184,13 @@ export class SqlQueryExecutorComponent implements OnInit {
   }
 
   // Fügt Query zur Historie hinzu
-  private addToHistory(query: string, database: string, success: boolean): void {
+  private addToHistory(query: string, database: string, success: boolean, type: 'read' | 'manipulation'): void {
     this.queryHistory.unshift({
       query,
       database,
       timestamp: new Date(),
-      success
+      success,
+      type
     });
     
     // Behalte nur die letzten 10 Queries
@@ -194,7 +244,136 @@ export class SqlQueryExecutorComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
+  // ===== NEUE METHODEN FÜR DATENBANKMANIPULATION =====
+
+  // Führt Manipulation Query aus
+  executeManipulation(): void {
+    if (this.manipulationForm.invalid) {
+      this.markManipulationFormGroupTouched();
+      return;
+    }
+
+    const manipulationRequest: ManipulationRequest = {
+      query: this.manipulationForm.value.query!.trim(),
+      database: this.manipulationForm.value.database!,
+      resetDatabase: this.manipulationForm.value.resetDatabase || false
+    };
+
+    this.isExecutingManipulation = true;
+    this.manipulationError = null;
+    this.manipulationResult = null;
+
+    this.http.post<ManipulationResult>(`${this.baseUrl}/execute-manipulation`, manipulationRequest)
+      .subscribe({
+        next: (result) => {
+          this.manipulationResult = result;
+          this.isExecutingManipulation = false;
+          
+          // Query zur Historie hinzufügen
+          this.addToHistory(manipulationRequest.query, manipulationRequest.database, true, 'manipulation');
+          
+          // Copy-Info aktualisieren
+          this.loadDatabaseCopyInfo(manipulationRequest.database);
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Fehler bei der Manipulation-Ausführung:', err);
+          this.manipulationError = err.error?.message || err.message || 'Fehler bei der Manipulation-Ausführung';
+          this.isExecutingManipulation = false;
+          
+          // Fehlgeschlagene Query zur Historie hinzufügen
+          this.addToHistory(manipulationRequest.query, manipulationRequest.database, false, 'manipulation');
+        }
+      });
+  }
+
+  // Lädt Database Copy Info
+  loadDatabaseCopyInfo(database: string): void {
+    if (!database) return;
+    
+    this.isLoadingCopyInfo = true;
+    this.http.get<DatabaseCopyInfo>(`${this.baseUrl}/database-copy-info/${database}`)
+      .subscribe({
+        next: (info) => {
+          this.databaseCopyInfo = info;
+          this.isLoadingCopyInfo = false;
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Fehler beim Laden der Copy-Info:', err);
+          this.databaseCopyInfo = null;
+          this.isLoadingCopyInfo = false;
+        }
+      });
+  }
+
+  // Setzt Database Copy zurück
+  resetDatabaseCopy(database: string): void {
+    if (!database) return;
+
+    this.http.post(`${this.baseUrl}/reset-database-copy/${database}`, {})
+      .subscribe({
+        next: () => {
+          this.databaseCopyInfo = null;
+          // Erfolgsmeldung könnte hier angezeigt werden
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Fehler beim Zurücksetzen der Copy:', err);
+          this.manipulationError = 'Fehler beim Zurücksetzen der Datenbank-Kopie';
+        }
+      });
+  }
+
+  // Markiert alle Manipulation Form Controls als touched für Validierung
+  private markManipulationFormGroupTouched(): void {
+    Object.keys(this.manipulationForm.controls).forEach(key => {
+      this.manipulationForm.get(key)?.markAsTouched();
+    });
+  }
+
+  // Setzt Beispiel-Manipulation Query
+  setExampleManipulationQuery(): void {
+    this.manipulationForm.patchValue({
+      query: 'SELECT * FROM users WHERE email LIKE \'%@example.com\' ORDER BY name LIMIT 10;'
+    });
+  }
+
+  // Löscht aktuellen Manipulation Query
+  clearManipulationQuery(): void {
+    this.manipulationForm.patchValue({ query: '' });
+    this.manipulationResult = null;
+    this.manipulationError = null;
+  }
+
+  // Lädt Manipulation Query aus Historie
+  loadManipulationFromHistory(historyItem: any): void {
+    this.manipulationForm.patchValue({
+      query: historyItem.query,
+      database: historyItem.database
+    });
+  }
+
+  // Formatiert Datum für Anzeige
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleString('de-DE');
+  }
+
+  // Berechnet verbleibende Zeit bis Copy-Ablauf
+  getRemainingTime(expiresAt: string): string {
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diff = expires.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Abgelaufen';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+  }
+
   // Getter für einfacheren Template-Zugriff
   get queryControl() { return this.queryForm.get('query'); }
   get databaseControl() { return this.queryForm.get('database'); }
+  get manipulationQueryControl() { return this.manipulationForm.get('query'); }
+  get manipulationDatabaseControl() { return this.manipulationForm.get('database'); }
+  get resetDatabaseControl() { return this.manipulationForm.get('resetDatabase'); }
 }
