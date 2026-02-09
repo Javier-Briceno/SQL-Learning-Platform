@@ -208,15 +208,32 @@ This project demonstrates proficiency in:
 
 ---
 
-## 👨‍💻 Project Contributors
+## 👨‍💻 Project Team
 
-This was a collaborative university project. All team members contributed to design, implementation, and testing.
+This was a collaborative university group project developed by a team of 5 students.
 
-**My Contributions:**
-- [List your specific contributions here]
-- Database schema design and Prisma setup
-- Authentication system implementation
-- [Other contributions]
+**Technologies & Skills Demonstrated:**
+- Full-stack development with TypeScript, NestJS, and Angular
+- PostgreSQL database design with Prisma ORM
+- JWT-based authentication and role-based authorization
+- RESTful API development and integration
+- Agile team collaboration and version control with Git
+
+**Project Scope:**
+The team collaboratively designed and implemented all features including user authentication, worksheet management, database sandboxing, and automated grading systems.
+
+---
+
+## 🎓 Learning Outcomes
+
+This project demonstrates proficiency in:
+- Full-stack TypeScript development
+- Database design and ORM usage
+- Authentication & authorization patterns
+- Role-based access control implementation
+- RESTful API design
+- Reactive frontend architecture
+- Collaborative software development
 
 ---
 
