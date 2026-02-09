@@ -55,4 +55,4 @@ prisma/migrations/
 
 # Misc
 *.log
-.cache/
+check.sh
