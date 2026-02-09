@@ -1,1 +1,0 @@
-# propra-gr1
