@@ -1,3 +1,261 @@
+# SQL-Lernplattform 📚
+
+> Eine Full-Stack-Bildungsplattform zum Erlernen von SQL durch interaktive Arbeitsblätter, entwickelt mit Angular und NestJS.
+
+**Universitäts-Gruppenprojekt** | Full-Stack-Webentwicklung | Sommersemester 2025
+
+---
+
+## 🎯 Projektübersicht
+
+Ein interaktives Lernmanagementsystem für SQL-Bildung, das es Tutoren ermöglicht, Übungen zu erstellen, Studenten SQL-Abfragen zu üben und automatische Bewertungsfunktionen bereitstellt.
+
+**Hauptmerkmale:**
+- Rollenbasierte Zugriffskontrolle (Studenten, Tutoren, Administratoren)
+- Interaktives SQL-Arbeitsblattsystem
+- Echtzeit-Datenbank-Sandboxen zum Üben
+- Automatisierte Bewertung von Einreichungen
+- Umfassendes Admin-Dashboard
+
+---
+
+## 🛠️ Tech-Stack
+
+### Backend
+- **NestJS** - Progressives Node.js-Framework
+- **Prisma** - ORM der nächsten Generation für PostgreSQL
+- **PostgreSQL** - Relationale Datenbank
+- **JWT** - Authentifizierung & Autorisierung
+- **Bcrypt** - Passwort-Hashing
+- **Class-validator** - DTO-Validierung
+
+### Frontend
+- **Angular 18** - Modernes Web-Framework
+- **Angular Material** - UI-Komponentenbibliothek
+- **RxJS** - Reaktive Programmierung
+- **TypeScript** - Typsichere Entwicklung
+
+---
+
+## 🏗️ Architektur
+
+```
+sql-learning-platform/
+├── sql-backend/          # NestJS REST API
+│   ├── src/
+│   │   ├── auth/        # JWT-Authentifizierung
+│   │   ├── worksheets/   # Übungsverwaltung
+│   │   ├── users/        # Benutzerverwaltung
+│   │   └── prisma/       # Datenbankdienst
+│   └── prisma/
+│       └── schema.prisma # Datenbankschema
+│
+└── sql-frontend/         # Angular SPA
+    └── src/
+        ├── app/
+        │   ├── auth/            # Login/Registrierung
+        │   ├── student-dashboard/
+        │   ├── tutor-dashboard/
+        │   └── admin-dashboard/
+        └── environments/
+```
+
+---
+
+## 📊 Datenbankschema
+
+**Kernmodelle:**
+- **User** - Studenten, Tutoren, Administratoren mit rollenbasierten Berechtigungen
+- **Worksheet** - Übungssammlungen, erstellt von Tutoren
+- **Task** - Einzelne Fragen (MCQ, SQL, Text)
+- **Submission** - Studentenantworten mit Bewertung
+- **DatabaseCopy** - Isolierte SQL-Sandboxen zum Üben
+- **ManagedDatabase** - Vorlagendatenbanken für Übungen
+
+---
+
+## 🚀 Erste Schritte
+
+### Voraussetzungen
+
+- Node.js 18+
+- PostgreSQL 14+
+- npm oder yarn
+
+### Backend-Einrichtung
+
+```bash
+cd sql-backend
+
+# Abhängigkeiten installieren
+npm install
+
+# Umgebungsvariablen konfigurieren
+cp .env.example .env
+# .env mit Ihren PostgreSQL-Verbindungsdetails bearbeiten
+
+# Prisma-Migrationen ausführen
+npx prisma migrate dev
+
+# Anfangsdaten einspielen (erstellt Admin-Konto)
+npx prisma db seed
+
+# Entwicklungsserver starten
+npm run start:dev
+```
+
+**Standard-Admin-Anmeldedaten:**
+- E-Mail: `admin@example.com`
+- Passwort: `Admin123!`
+
+### Frontend-Einrichtung
+
+```bash
+cd sql-frontend
+
+# Abhängigkeiten installieren
+npm install
+
+# Entwicklungsserver starten
+npm start
+```
+
+Besuchen Sie `http://localhost:4200`
+
+---
+
+## 👥 Benutzerrollen
+
+### Student
+- SQL-Arbeitsblätter bearbeiten
+- Antworten einreichen
+- Noten und Feedback anzeigen
+- Zugriff auf persönliche Datenbank-Sandboxen
+
+### Tutor
+- Arbeitsblätter erstellen und veröffentlichen
+- SQL-Übungen entwerfen
+- Studenteneinreichungen bewerten
+- Feedback geben
+
+### Administrator
+- Benutzer verwalten (sperren/entsperren)
+- Alle Arbeitsblätter überwachen
+- Systemweite Analysen
+- Datenbankverwaltung
+
+**Tutor-Registrierung:**
+Tutoren registrieren sich selbst mit einem geheimen Schlüssel: `TUT0R-K3Y-2025` (konfigurierbar in `.env`)
+
+---
+
+## 🔐 Sicherheitsfunktionen
+
+- JWT-basierte Authentifizierung
+- Bcrypt-Passwort-Hashing
+- Rollenbasierte Zugriffskontrolle (RBAC)
+- Eingabevalidierung mit class-validator
+- SQL-Injection-Prävention über Prisma ORM
+- Datenbank-Isolation pro Student
+
+---
+
+## 🧪 Testen
+
+```bash
+# Backend-Tests
+cd sql-backend
+npm run test           # Unit-Tests
+npm run test:e2e       # End-to-End-Tests
+npm run test:cov       # Abdeckungsbericht
+
+# Frontend-Tests
+cd sql-frontend
+npm run test
+```
+
+---
+
+## 📈 Wichtige technische Errungenschaften
+
+**Datenbankverwaltung:**
+- Dynamische Erstellung von Datenbankkopien für Studentenübungen
+- Schema-Verwaltung durch Prisma-Migrationen
+- Komplexe Beziehungen zwischen mehreren Tabellen
+
+**Echtzeit-Funktionen:**
+- Reaktive Zustandsverwaltung mit RxJS
+- Sofortiges Feedback zu Einreichungen
+- Live-Aktualisierungen von Arbeitsblättern
+
+**Skalierbarkeit:**
+- RESTful-API-Architektur
+- Modulare NestJS-Struktur
+- Angular Lazy-Loading
+
+---
+
+## 🎓 Lernergebnisse
+
+Dieses Projekt demonstriert Kompetenz in:
+- Full-Stack-TypeScript-Entwicklung
+- Datenbankdesign und ORM-Nutzung
+- Authentifizierungs- & Autorisierungsmuster
+- Implementierung rollenbasierter Zugriffskontrolle
+- RESTful-API-Design
+- Reaktive Frontend-Architektur
+- Testgetriebene Entwicklung
+
+---
+
+## 👨‍💻 Projektteam
+
+Dies war ein kollaboratives Universitäts-Gruppenprojekt, entwickelt von einem Team aus 5 Studenten.
+
+**Demonstrierte Technologien & Fähigkeiten:**
+- Full-Stack-Entwicklung mit TypeScript, NestJS und Angular
+- PostgreSQL-Datenbankdesign mit Prisma ORM
+- JWT-basierte Authentifizierung und rollenbasierte Autorisierung
+- RESTful-API-Entwicklung und -Integration
+- Agile Teamzusammenarbeit und Versionskontrolle mit Git
+
+**Projektumfang:**
+Das Team hat gemeinsam alle Funktionen entworfen und implementiert, einschließlich Benutzerauthentifizierung, Arbeitsblattverwaltung, Datenbank-Sandboxing und automatisierte Bewertungssysteme.
+
+---
+
+## 🎓 Lernergebnisse
+
+Dieses Projekt demonstriert Kompetenz in:
+- Full-Stack-TypeScript-Entwicklung
+- Datenbankdesign und ORM-Nutzung
+- Authentifizierungs- & Autorisierungsmuster
+- Implementierung rollenbasierter Zugriffskontrolle
+- RESTful-API-Design
+- Reaktive Frontend-Architektur
+- Kollaborative Softwareentwicklung
+
+---
+
+## 📝 Lizenz
+
+Dieses Projekt wurde für Bildungszwecke im Rahmen von Universitätskursen erstellt.
+
+---
+
+## 🔗 Verwandte Technologien
+
+- [NestJS-Dokumentation](https://docs.nestjs.com/)
+- [Angular-Dokumentation](https://angular.dev/)
+- [Prisma-Dokumentation](https://www.prisma.io/docs)
+- [PostgreSQL-Dokumentation](https://www.postgresql.org/docs/)
+
+---
+
+---
+---
+---
+
 # SQL Learning Platform 📚
 
 > A full-stack educational platform for learning SQL through interactive worksheets, built with Angular and NestJS.
